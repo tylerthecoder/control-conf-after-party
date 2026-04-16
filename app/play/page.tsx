@@ -41,6 +41,7 @@ export default function PlayPage() {
   const [completingSide, setCompletingSide] = useState(false);
   const [cancelingMain, setCancelingMain] = useState(false);
   const [cancelingSide, setCancelingSide] = useState(false);
+  const [selfReporting, setSelfReporting] = useState(false);
   const [mainQr, setMainQr] = useState<string | null>(null);
   const [sideQr, setSideQr] = useState<string | null>(null);
 
@@ -106,6 +107,14 @@ export default function PlayPage() {
     });
     if (res.ok) await fetchData();
     setter(false);
+  }
+
+  async function handleSelfReport() {
+    if (!confirm("Are you sure? You'll lose 1 point and get a new side task.")) return;
+    setSelfReporting(true);
+    const res = await fetch("/api/self-report", { method: "POST" });
+    if (res.ok) await fetchData();
+    setSelfReporting(false);
   }
 
   async function handleLogout() {
@@ -195,6 +204,8 @@ export default function PlayPage() {
           canceling={cancelingSide}
           qrDataUrl={sideQr}
           profileUrl={`${profileUrl}?verify=side`}
+          onSelfReport={handleSelfReport}
+          selfReporting={selfReporting}
         />
 
         {/* Completed Tasks */}
@@ -347,6 +358,8 @@ function TaskSection({
   canceling,
   qrDataUrl,
   profileUrl,
+  onSelfReport,
+  selfReporting,
 }: {
   title: string;
   titleExtra?: React.ReactNode;
@@ -361,6 +374,8 @@ function TaskSection({
   canceling: boolean;
   qrDataUrl: string | null;
   profileUrl: string;
+  onSelfReport?: () => void;
+  selfReporting?: boolean;
 }) {
   return (
     <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
@@ -385,18 +400,31 @@ function TaskSection({
       <div className="px-5 py-4 space-y-4">
         <p className="text-[15px] leading-relaxed">{task}</p>
         {canRequest && !isPending && (
-          <Button
-            onClick={onRequest}
-            disabled={isCompleting}
-            variant="outline"
-            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
-          >
-            {isCompleting ? (
-              <span className="font-mono text-xs">SUBMITTING...</span>
-            ) : (
-              "Request Verification"
+          <div className="flex items-center gap-3">
+            <Button
+              onClick={onRequest}
+              disabled={isCompleting}
+              variant="outline"
+              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+            >
+              {isCompleting ? (
+                <span className="font-mono text-xs">SUBMITTING...</span>
+              ) : (
+                "Request Verification"
+              )}
+            </Button>
+            {onSelfReport && (
+              <Button
+                onClick={onSelfReport}
+                disabled={selfReporting}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+              >
+                {selfReporting ? "Reporting..." : "Somebody caught me"}
+              </Button>
             )}
-          </Button>
+          </div>
         )}
         {isPending && (
           <div className="rounded-lg bg-amber-500/[0.04] border border-amber-500/15 p-4 space-y-4">
