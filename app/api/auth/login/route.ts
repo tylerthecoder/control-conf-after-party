@@ -9,7 +9,7 @@ import { mainTasks, sideTasks } from "@/lib/tasks";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name } = await req.json();
+    const { name, deviceToken } = await req.json();
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -31,7 +31,18 @@ export async function POST(req: NextRequest) {
       name: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
     });
 
-    if (!player) {
+    if (player) {
+      if (player.deviceToken && player.deviceToken !== deviceToken) {
+        return NextResponse.json(
+          { error: "This name is already taken by another device" },
+          { status: 403 }
+        );
+      }
+      if (!player.deviceToken && deviceToken) {
+        player.deviceToken = deviceToken;
+        await player.save();
+      }
+    } else {
       const mainTask =
         mainTasks[Math.floor(Math.random() * mainTasks.length)];
 
@@ -51,6 +62,7 @@ export async function POST(req: NextRequest) {
       player = await Player.create({
         name: trimmedName,
         role: "monitor",
+        deviceToken: deviceToken || null,
         mainTask,
         sideTask,
         flagsRemaining: 3,

@@ -19,6 +19,15 @@ export default function Home() {
       .catch(() => setGameActive(false));
   }, []);
 
+  function getDeviceToken() {
+    let token = localStorage.getItem("eval-device-token");
+    if (!token) {
+      token = crypto.randomUUID();
+      localStorage.setItem("eval-device-token", token);
+    }
+    return token;
+  }
+
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -28,7 +37,7 @@ export default function Home() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), deviceToken: getDeviceToken() }),
       });
 
       const data = await res.json();

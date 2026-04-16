@@ -3,6 +3,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 export interface IPlayer extends Document {
   name: string;
   role: "player" | "monitor";
+  deviceToken: string | null;
   mainTask: string | null;
   mainTaskPendingVerification: boolean;
   completedMainTasks: string[];
@@ -20,6 +21,7 @@ const PlayerSchema = new Schema<IPlayer>(
   {
     name: { type: String, required: true, unique: true },
     role: { type: String, enum: ["player", "monitor"], default: "player" },
+    deviceToken: { type: String, default: null },
     mainTask: { type: String, default: null },
     mainTaskPendingVerification: { type: Boolean, default: false },
     completedMainTasks: { type: [String], default: [] },
