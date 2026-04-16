@@ -24,6 +24,7 @@ interface PlayerData {
 interface FlagData {
   _id: string;
   guess: string;
+  selfReport?: boolean;
   status: string;
   auditReason: string | null;
   createdAt: string;
@@ -42,6 +43,8 @@ export default function PlayPage() {
   const [cancelingMain, setCancelingMain] = useState(false);
   const [cancelingSide, setCancelingSide] = useState(false);
   const [selfReporting, setSelfReporting] = useState(false);
+  const [showSelfReportPicker, setShowSelfReportPicker] = useState(false);
+  const [allPlayers, setAllPlayers] = useState<{ _id: string; name: string }[]>([]);
   const [mainQr, setMainQr] = useState<string | null>(null);
   const [sideQr, setSideQr] = useState<string | null>(null);
 
@@ -109,11 +112,26 @@ export default function PlayPage() {
     setter(false);
   }
 
-  async function handleSelfReport() {
-    if (!confirm("Are you sure? You'll lose 1 point and get a new side task.")) return;
+  async function openSelfReportPicker() {
+    setShowSelfReportPicker(true);
+    try {
+      const res = await fetch("/api/players");
+      const data = await res.json();
+      setAllPlayers(data.filter((p: { _id: string }) => p._id !== player?._id));
+    } catch { /* ignore */ }
+  }
+
+  async function handleSelfReport(catcherId: string) {
     setSelfReporting(true);
-    const res = await fetch("/api/self-report", { method: "POST" });
-    if (res.ok) await fetchData();
+    const res = await fetch("/api/self-report", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ catcherId }),
+    });
+    if (res.ok) {
+      setShowSelfReportPicker(false);
+      await fetchData();
+    }
     setSelfReporting(false);
   }
 
@@ -204,8 +222,12 @@ export default function PlayPage() {
           canceling={cancelingSide}
           qrDataUrl={sideQr}
           profileUrl={`${profileUrl}?verify=side`}
-          onSelfReport={handleSelfReport}
+          onSelfReport={openSelfReportPicker}
           selfReporting={selfReporting}
+          showSelfReportPicker={showSelfReportPicker}
+          selfReportPlayers={allPlayers}
+          onSelfReportSelect={handleSelfReport}
+          onSelfReportCancel={() => setShowSelfReportPicker(false)}
         />
 
         {/* Completed Tasks */}
@@ -272,6 +294,9 @@ export default function PlayPage() {
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">
                       {flag.targetId?.name ?? "Unknown"}
+                      {flag.selfReport && (
+                        <span className="ml-2 font-mono text-[10px] text-muted-foreground/40">(they self-reported)</span>
+                      )}
                     </span>
                     <div className="flex items-center gap-2">
                       {flag.status === "caught" && (
@@ -283,10 +308,12 @@ export default function PlayPage() {
                       <FlagStatusBadge status={flag.status} />
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Your guess: </span>
-                    {flag.guess}
-                  </p>
+                  {!flag.selfReport && (
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Your guess: </span>
+                      {flag.guess}
+                    </p>
+                  )}
                   {flag.auditReason && (
                     <p className="text-sm italic text-muted-foreground/80 border-l-2 border-muted-foreground/20 pl-3">
                       {flag.auditReason}
@@ -311,14 +338,23 @@ export default function PlayPage() {
                 <div key={flag._id} className="px-5 py-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                      Flagged by {flag.monitorId?.name ?? "Unknown"}
+                      {flag.selfReport
+                        ? <>Self-reported — caught by {flag.monitorId?.name ?? "Unknown"}</>
+                        : <>Flagged by {flag.monitorId?.name ?? "Unknown"}</>}
                     </span>
-                    <FlagStatusBadge status={flag.status} />
+                    <div className="flex items-center gap-2">
+                      {flag.status === "caught" && (
+                        <span className="font-mono text-xs font-bold text-destructive">-1</span>
+                      )}
+                      <FlagStatusBadge status={flag.status} />
+                    </div>
                   </div>
-                  <p className="text-sm leading-relaxed">
-                    <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Their guess: </span>
-                    {flag.guess}
-                  </p>
+                  {!flag.selfReport && (
+                    <p className="text-sm leading-relaxed">
+                      <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Their guess: </span>
+                      {flag.guess}
+                    </p>
+                  )}
                   {flag.status === "pending" && (
                     <Button
                       size="sm"
@@ -360,6 +396,10 @@ function TaskSection({
   profileUrl,
   onSelfReport,
   selfReporting,
+  showSelfReportPicker,
+  selfReportPlayers,
+  onSelfReportSelect,
+  onSelfReportCancel,
 }: {
   title: string;
   titleExtra?: React.ReactNode;
@@ -376,6 +416,10 @@ function TaskSection({
   profileUrl: string;
   onSelfReport?: () => void;
   selfReporting?: boolean;
+  showSelfReportPicker?: boolean;
+  selfReportPlayers?: { _id: string; name: string }[];
+  onSelfReportSelect?: (catcherId: string) => void;
+  onSelfReportCancel?: () => void;
 }) {
   return (
     <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
@@ -413,7 +457,7 @@ function TaskSection({
                 "Request Verification"
               )}
             </Button>
-            {onSelfReport && (
+            {onSelfReport && !showSelfReportPicker && (
               <Button
                 onClick={onSelfReport}
                 disabled={selfReporting}
@@ -421,9 +465,41 @@ function TaskSection({
                 size="sm"
                 className="text-xs text-destructive/60 hover:text-destructive hover:bg-destructive/10"
               >
-                {selfReporting ? "Reporting..." : "Somebody caught me"}
+                Somebody caught me
               </Button>
             )}
+          </div>
+        )}
+        {showSelfReportPicker && (
+          <div className="rounded-lg bg-destructive/[0.04] border border-destructive/15 p-4 space-y-3">
+            <p className="text-sm text-destructive/80 font-medium">
+              Who caught you? <span className="text-muted-foreground/60 font-normal">(they&apos;ll get +3 pts, you&apos;ll get -1)</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {selfReportPlayers?.map((p) => (
+                <Button
+                  key={p._id}
+                  onClick={() => onSelfReportSelect?.(p._id)}
+                  disabled={selfReporting}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
+                >
+                  {p.name}
+                </Button>
+              ))}
+            </div>
+            {selfReporting && (
+              <p className="font-mono text-xs text-muted-foreground animate-pulse-glow">REPORTING...</p>
+            )}
+            <Button
+              onClick={onSelfReportCancel}
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground/60 hover:text-muted-foreground"
+            >
+              Cancel
+            </Button>
           </div>
         )}
         {isPending && (
