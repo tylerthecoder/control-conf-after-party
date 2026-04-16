@@ -76,7 +76,7 @@ export default function RulesPage() {
           </div>
           <div className="px-5 py-4 space-y-3 text-sm text-muted-foreground leading-relaxed">
             <p>
-              You have <span className="text-amber-400 font-medium">3 flags</span> to use. If you see someone acting suspicious, file a report describing what you saw.
+              If you see someone acting suspicious, file a report describing what you saw.
             </p>
             <p>
               The flagged player gets a chance to defend themselves. Then an <span className="text-foreground font-medium">AI auditor</span> reviews the evidence and makes a ruling.

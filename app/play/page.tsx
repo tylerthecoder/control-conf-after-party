@@ -214,28 +214,19 @@ export default function PlayPage() {
 
         {/* Flag Others */}
         <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] overflow-hidden">
-          <div className="px-5 py-3 border-b border-amber-500/10 flex items-center justify-between">
+          <div className="px-5 py-3 border-b border-amber-500/10">
             <h2 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">
               Flag Others
             </h2>
-            <span className="font-mono text-xs text-amber-400/60">
-              {player.flagsRemaining} FLAGS REMAINING
-            </span>
           </div>
           <div className="px-5 py-4">
-            {player.flagsRemaining > 0 ? (
-              <Button
-                onClick={() => router.push("/flag")}
-                variant="outline"
-                className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-              >
-                Flag Suspicious Behavior
-              </Button>
-            ) : (
-              <p className="text-sm text-muted-foreground font-mono">
-                All flags deployed
-              </p>
-            )}
+            <Button
+              onClick={() => router.push("/flag")}
+              variant="outline"
+              className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
+            >
+              Flag Suspicious Behavior
+            </Button>
           </div>
         </section>
 

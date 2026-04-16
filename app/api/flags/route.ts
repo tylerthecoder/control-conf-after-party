@@ -26,10 +26,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (monitor.flagsRemaining <= 0) {
-    return NextResponse.json({ error: "No flags remaining" }, { status: 400 });
-  }
-
   const { targetId, observation } = await req.json();
 
   if (!targetId || !observation?.trim()) {
@@ -59,9 +55,6 @@ export async function POST(req: NextRequest) {
     targetId,
     observation: observation.trim(),
   });
-
-  monitor.flagsRemaining -= 1;
-  await monitor.save();
 
   return NextResponse.json({ success: true, flagId: flag._id });
 }
