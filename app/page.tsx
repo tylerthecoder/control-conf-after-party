@@ -1,65 +1,128 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [gameActive, setGameActive] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/game-status")
+      .then((r) => r.json())
+      .then((data) => setGameActive(data.active))
+      .catch(() => setGameActive(false));
+  }, []);
+
+  async function handleJoin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Something went wrong");
+        return;
+      }
+
+      router.push("/play");
+    } catch {
+      setError("Failed to connect. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (gameActive === null) {
+    return (
+      <main className="flex-1 flex items-center justify-center grid-bg">
+        <div className="font-mono text-sm text-muted-foreground animate-pulse-glow">
+          INITIALIZING...
         </div>
       </main>
-    </div>
+    );
+  }
+
+  return (
+    <main className="flex-1 flex items-center justify-center p-4 grid-bg relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-amber-500/[0.03] rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative w-full max-w-md space-y-8 animate-fade-in-up">
+        <div className="text-center space-y-3">
+          <div className="inline-block">
+            <p className="font-mono text-xs tracking-[0.3em] text-amber-500/70 uppercase mb-3">
+              ControlConf 2026 After Party
+            </p>
+            <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
+              The Eval
+            </h1>
+            <div className="mt-3 h-px bg-gradient-to-r from-transparent via-muted-foreground/30 to-transparent" />
+          </div>
+          <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
+            A live AI control evaluation. Complete your task.
+            Evade the monitors. Don&apos;t get caught.
+          </p>
+        </div>
+
+        {gameActive ? (
+          <form onSubmit={handleJoin} className="space-y-4">
+            <div className="relative">
+              <Input
+                placeholder="Enter your name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                disabled={loading}
+                autoFocus
+                className="h-14 text-lg bg-card/50 border-border/50 pl-4 pr-4 placeholder:text-muted-foreground/40 focus:border-amber-500/30 focus:ring-amber-500/10 transition-colors"
+              />
+            </div>
+            {error && (
+              <p className="text-sm text-destructive font-mono">{error}</p>
+            )}
+            <Button
+              type="submit"
+              className="w-full h-12 text-base font-medium tracking-wide"
+              disabled={loading || !name.trim()}
+            >
+              {loading ? (
+                <span className="font-mono text-sm">AUTHENTICATING...</span>
+              ) : (
+                "Enter the Eval"
+              )}
+            </Button>
+            <p className="text-center text-xs text-muted-foreground/50 font-mono">
+              You will be assigned a role upon entry
+            </p>
+          </form>
+        ) : (
+          <div className="text-center space-y-4 py-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50 bg-card/30">
+              <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />
+              <span className="font-mono text-sm text-muted-foreground">
+                STANDBY
+              </span>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              The eval hasn&apos;t started yet. Awaiting operator.
+            </p>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }
