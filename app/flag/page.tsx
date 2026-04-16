@@ -93,7 +93,9 @@ function FlagForm() {
               </label>
               <Select value={targetId} onValueChange={(v) => setTargetId(v ?? "")}>
                 <SelectTrigger className="h-11 bg-background/50 border-border/50">
-                  <SelectValue placeholder="Select a player..." />
+                  <SelectValue placeholder="Select a player...">
+                    {players.find((p) => p._id === targetId)?.name}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {players.map((p) => (
