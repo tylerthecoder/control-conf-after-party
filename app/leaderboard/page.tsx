@@ -10,6 +10,7 @@ interface LeaderboardPlayer {
   sideTaskCompleted: boolean;
   sideTaskPendingVerification: boolean;
   sideTaskFailed: boolean;
+  completedSideTasks: string[];
   flagsRemaining: number;
   rank: number;
 }
@@ -98,7 +99,7 @@ export default function LeaderboardPage() {
                     {p.score}
                   </p>
                   <div className="flex items-center justify-center gap-1.5 mt-3">
-                    {p.sideTaskCompleted && <StatusDot color="emerald" label="Done" />}
+                    {p.completedSideTasks.length > 0 && <TaskCount count={p.completedSideTasks.length} />}
                     {p.sideTaskPendingVerification && <StatusDot color="amber" label="Pending" />}
                     {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
                     <FlagCount remaining={p.flagsRemaining} />
@@ -145,19 +146,19 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-base font-medium">{p.name}</span>
                       <div className="flex items-center gap-1.5">
-                        {p.sideTaskCompleted && <StatusDot color="emerald" label="Done" />}
-                        {p.sideTaskPendingVerification && <StatusDot color="amber" label="Pending" />}
-                        {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
-                        <FlagCount remaining={p.flagsRemaining} />
+                        {p.completedSideTasks.length > 0 && <TaskCount count={p.completedSideTasks.length} />}
+                          {p.sideTaskPendingVerification && <StatusDot color="amber" label="Pending" />}
+                          {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
+                          <FlagCount remaining={p.flagsRemaining} />
+                        </div>
                       </div>
                     </div>
+                    <span className="text-2xl font-bold tabular-nums">
+                      {p.score}
+                    </span>
                   </div>
-                  <span className="text-2xl font-bold tabular-nums">
-                    {p.score}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
 
             {/* When fewer than 3 players, show simple list */}
             {all.length > 0 && all.length < 3 && all.map((p, i) => {
@@ -180,7 +181,7 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-base font-medium">{p.name}</span>
                       <div className="flex items-center gap-1.5">
-                        {p.sideTaskCompleted && <StatusDot color="emerald" label="Done" />}
+                        {p.completedSideTasks.length > 0 && <TaskCount count={p.completedSideTasks.length} />}
                         {p.sideTaskPendingVerification && <StatusDot color="amber" label="Pending" />}
                         {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
                         <FlagCount remaining={p.flagsRemaining} />
@@ -251,6 +252,15 @@ function FlagCount({ remaining }: { remaining: number }) {
   return (
     <span className="font-mono text-[10px] tracking-wider text-zinc-600 flex items-center gap-1">
       {used} flag{used !== 1 ? "s" : ""}
+    </span>
+  );
+}
+
+function TaskCount({ count }: { count: number }) {
+  return (
+    <span className="font-mono text-[10px] tracking-wider text-emerald-400/60 flex items-center gap-1">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
+      {count} task{count !== 1 ? "s" : ""}
     </span>
   );
 }

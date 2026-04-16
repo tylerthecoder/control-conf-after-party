@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import QRCode from "qrcode";
 
 interface PlayerData {
   _id: string;
@@ -13,6 +14,7 @@ interface PlayerData {
   sideTaskCompleted: boolean;
   sideTaskPendingVerification: boolean;
   sideTaskFailed: boolean;
+  completedSideTasks: string[];
   score: number;
   flagsRemaining: number;
 }
@@ -35,6 +37,7 @@ export default function PlayPage() {
   const [flagsByMe, setFlagsByMe] = useState<FlagData[]>([]);
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -57,6 +60,19 @@ export default function PlayPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (player?.sideTaskPendingVerification && player._id) {
+      const url = `${window.location.origin}/player/${player._id}`;
+      QRCode.toDataURL(url, {
+        width: 200,
+        margin: 2,
+        color: { dark: "#ffffff", light: "#00000000" },
+      }).then(setQrDataUrl).catch(() => {});
+    } else {
+      setQrDataUrl(null);
+    }
+  }, [player?.sideTaskPendingVerification, player?._id]);
 
   async function handleComplete() {
     setCompleting(true);
@@ -85,9 +101,12 @@ export default function PlayPage() {
   if (!player) return null;
 
   const canRequestVerification =
-    !player.sideTaskCompleted &&
     !player.sideTaskPendingVerification &&
     !player.sideTaskFailed;
+  const profileUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/player/${player._id}`
+      : "";
 
   return (
     <main className="flex-1 grid-bg">
@@ -100,6 +119,11 @@ export default function PlayPage() {
               <span className="font-mono text-lg tabular-nums text-muted-foreground">
                 {player.score}<span className="text-xs ml-1">PTS</span>
               </span>
+              {player.completedSideTasks.length > 0 && (
+                <span className="font-mono text-xs text-emerald-400/60">
+                  {player.completedSideTasks.length} task{player.completedSideTasks.length !== 1 ? "s" : ""} done
+                </span>
+              )}
             </div>
           </div>
           <div className="flex gap-2">
@@ -128,12 +152,6 @@ export default function PlayPage() {
             <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
               Side Task <span className="text-destructive/60">(Secret)</span>
             </h2>
-            {player.sideTaskCompleted && (
-              <span className="font-mono text-xs text-emerald-400 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                VERIFIED
-              </span>
-            )}
             {player.sideTaskPendingVerification && (
               <span className="font-mono text-xs text-amber-400 flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-glow" />
@@ -164,19 +182,52 @@ export default function PlayPage() {
               </Button>
             )}
             {player.sideTaskPendingVerification && (
-              <div className="rounded-lg bg-amber-500/[0.04] border border-amber-500/15 p-4 space-y-2">
+              <div className="rounded-lg bg-amber-500/[0.04] border border-amber-500/15 p-4 space-y-4">
                 <p className="text-sm text-amber-400/80">
-                  Ask another player to visit your profile and confirm your task.
+                  Show this QR code to another player to verify your task.
                 </p>
-                <p className="text-xs text-muted-foreground font-mono break-all">
-                  {typeof window !== "undefined" ? window.location.origin : ""}/player/{player._id}
+                {qrDataUrl && (
+                  <div className="flex justify-center">
+                    <img
+                      src={qrDataUrl}
+                      alt="Verification QR code"
+                      className="w-48 h-48"
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground font-mono break-all text-center">
+                  {profileUrl}
                 </p>
               </div>
             )}
           </div>
         </section>
 
-        {/* Monitor Tools */}
+        {/* Completed Side Tasks */}
+        {player.completedSideTasks.length > 0 && (
+          <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden">
+            <div className="px-5 py-3 border-b border-emerald-500/10 flex items-center justify-between">
+              <h2 className="font-mono text-xs tracking-wider text-emerald-400/80 uppercase">
+                Completed Tasks
+              </h2>
+              <span className="font-mono text-xs text-emerald-400/40">
+                {player.completedSideTasks.length}
+              </span>
+            </div>
+            <div className="divide-y divide-emerald-500/[0.06]">
+              {player.completedSideTasks.map((task, i) => (
+                <div key={i} className="px-5 py-3 flex items-start gap-3">
+                  <span className="font-mono text-xs text-emerald-400/40 mt-0.5 shrink-0">
+                    {i + 1}.
+                  </span>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{task}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Flag Others */}
         <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] overflow-hidden">
           <div className="px-5 py-3 border-b border-amber-500/10 flex items-center justify-between">
             <h2 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">

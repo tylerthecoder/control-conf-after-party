@@ -22,13 +22,6 @@ export async function POST() {
     return NextResponse.json({ error: "Player not found" }, { status: 404 });
   }
 
-  if (player.sideTaskCompleted) {
-    return NextResponse.json(
-      { error: "Task already completed" },
-      { status: 400 }
-    );
-  }
-
   if (player.sideTaskPendingVerification) {
     return NextResponse.json(
       { error: "Task already pending verification" },

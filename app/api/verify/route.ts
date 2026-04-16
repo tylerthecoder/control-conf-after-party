@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
 import { Player } from "@/lib/models/Player";
 import { sessionOptions, SessionData } from "@/lib/session";
+import { sideTasks } from "@/lib/tasks";
 
 export async function POST(req: NextRequest) {
   const session = await getIronSession<SessionData>(
@@ -49,14 +50,34 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  target.sideTaskPendingVerification = false;
-  target.sideTaskCompleted = true;
-  target.score += 1;
-  await target.save();
+  const completedTask = target.sideTask!;
+  const priorCompleted = target.completedSideTasks ?? [];
+  const allCompleted = [...priorCompleted, completedTask];
+
+  const usedTasks = new Set(allCompleted);
+  const availableTasks = sideTasks.filter((t) => !usedTasks.has(t));
+  const nextTask =
+    availableTasks.length > 0
+      ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
+      : sideTasks[Math.floor(Math.random() * sideTasks.length)];
+
+  await Player.collection.updateOne(
+    { _id: target._id },
+    {
+      $push: { completedSideTasks: completedTask },
+      $set: {
+        sideTask: nextTask,
+        sideTaskPendingVerification: false,
+        sideTaskCompleted: false,
+        sideTaskFailed: false,
+      },
+      $inc: { score: 1 },
+    }
+  );
 
   return NextResponse.json({
     success: true,
     playerName: target.name,
-    newScore: target.score,
+    newScore: target.score + 1,
   });
 }
