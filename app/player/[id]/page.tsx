@@ -21,7 +21,8 @@ export default function PlayerPage({
   const { id } = use(params);
   const router = useRouter();
   const [player, setPlayer] = useState<PlayerInfo | null>(null);
-  const [me, setMe] = useState<{ _id?: string; role?: string } | null>(null);
+  const [me, setMe] = useState<{ _id?: string } | null>(null);
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -30,16 +31,24 @@ export default function PlayerPage({
   useEffect(() => {
     Promise.all([
       fetch(`/api/players/${id}`).then((r) => r.json()),
-      fetch("/api/me").then((r) => (r.ok ? r.json() : null)),
+      fetch("/api/me").then((r) => {
+        if (r.ok) return r.json();
+        return null;
+      }),
     ])
       .then(([playerData, meData]) => {
         setPlayer(playerData);
-        setMe(meData?.player ?? null);
+        if (meData?.player) {
+          setMe(meData.player);
+          setLoggedIn(true);
+        } else {
+          setMe(null);
+          setLoggedIn(false);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
-
 
   async function handleVerify() {
     setVerifying(true);
@@ -81,6 +90,34 @@ export default function PlayerPage({
     );
   }
 
+  if (loggedIn === false) {
+    return (
+      <main className="flex-1 flex items-center justify-center p-4 grid-bg">
+        <div className="w-full max-w-sm space-y-5 animate-fade-in-up">
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-6 text-center space-y-4">
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse-glow" />
+              <h2 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">
+                Verification Request
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-medium text-foreground">{player.name}</span>{" "}
+              needs someone to verify their side task. Join the party first to confirm it.
+            </p>
+            <Button
+              onClick={() => router.push("/")}
+              className="w-full bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20"
+              variant="outline"
+            >
+              Join the Party
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const isSelf = me?._id === player._id;
   const canVerify =
     player.sideTaskPendingVerification && !isSelf && me != null && !verified;
@@ -88,11 +125,6 @@ export default function PlayerPage({
   return (
     <main className="flex-1 flex items-center justify-center p-4 grid-bg">
       <div className="w-full max-w-sm space-y-5 animate-fade-in-up">
-        {/* Player card */}
-        <div className="rounded-xl border border-border/50 bg-card/50 p-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">{player.name}</h1>
-        </div>
-
         {/* Verification request */}
         {canVerify && (
           <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] p-5 space-y-4">
@@ -132,6 +164,19 @@ export default function PlayerPage({
           </div>
         )}
 
+        {/* Self-viewing */}
+        {isSelf && player.sideTaskPendingVerification && (
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-5 text-center space-y-2">
+            <span className="font-mono text-xs text-amber-400 flex items-center justify-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse-glow" />
+              AWAITING VERIFICATION
+            </span>
+            <p className="text-sm text-muted-foreground">
+              Someone else needs to scan this page to verify your task.
+            </p>
+          </div>
+        )}
+
         {/* Verification confirmed */}
         {verified && (
           <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-5 text-center space-y-2">
@@ -145,29 +190,23 @@ export default function PlayerPage({
           </div>
         )}
 
-        {/* Already completed */}
-        {player.sideTaskCompleted && !verified && (
-          <div className="rounded-xl border border-border/30 bg-card/30 p-4 text-center">
-            <span className="font-mono text-xs text-emerald-400/60">
-              Task already verified
-            </span>
+        {/* No pending verification */}
+        {!player.sideTaskPendingVerification && !verified && (
+          <div className="rounded-xl border border-border/30 bg-card/30 p-5 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {player.name} doesn&apos;t have a task pending verification right now.
+            </p>
           </div>
         )}
 
         {/* Navigation */}
         <div className="text-center">
-          {me ? (
-            <Button
-              variant="outline"
-              onClick={() => router.push("/play")}
-            >
-              Back to Dashboard
-            </Button>
-          ) : (
-            <Button onClick={() => router.push("/")}>
-              Enter the Eval
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            onClick={() => router.push("/play")}
+          >
+            Back to Dashboard
+          </Button>
         </div>
       </div>
     </main>

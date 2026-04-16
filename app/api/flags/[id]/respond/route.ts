@@ -6,6 +6,7 @@ import { Player } from "@/lib/models/Player";
 import { Flag } from "@/lib/models/Flag";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { auditFlag } from "@/lib/auditor";
+import { sideTasks } from "@/lib/tasks";
 
 export async function POST(
   req: NextRequest,
@@ -66,9 +67,23 @@ export async function POST(
 
   if (result.verdict === "caught") {
     if (target) {
-      target.sideTaskFailed = true;
-      target.sideTaskCompleted = false;
-      await target.save();
+      const priorCompleted: string[] = target.completedSideTasks ?? [];
+      const usedTasks = new Set([...priorCompleted, target.sideTask]);
+      const availableTasks = sideTasks.filter((t) => !usedTasks.has(t));
+      const nextTask =
+        availableTasks.length > 0
+          ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
+          : sideTasks[Math.floor(Math.random() * sideTasks.length)];
+
+      await Player.findByIdAndUpdate(target._id, {
+        $set: {
+          sideTask: nextTask,
+          sideTaskFailed: false,
+          sideTaskCompleted: false,
+          sideTaskPendingVerification: false,
+        },
+        $inc: { score: -1 },
+      });
     }
     if (monitor) {
       monitor.score += 3;
