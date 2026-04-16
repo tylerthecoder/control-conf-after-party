@@ -11,6 +11,8 @@ interface LeaderboardPlayer {
   sideTaskPendingVerification: boolean;
   sideTaskFailed: boolean;
   completedSideTasks: string[];
+  mainTaskPendingVerification: boolean;
+  completedMainTasks: string[];
   flagsRemaining: number;
   rank: number;
 }
@@ -99,8 +101,8 @@ export default function LeaderboardPage() {
                     {p.score}
                   </p>
                   <div className="flex items-center justify-center gap-1.5 mt-3">
-                    {p.completedSideTasks.length > 0 && <TaskCount count={p.completedSideTasks.length} />}
-                    {p.sideTaskPendingVerification && <StatusDot color="amber" label="Pending" />}
+                    {((p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)) > 0 && <TaskCount count={(p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)} />}
+                    {(p.sideTaskPendingVerification || p.mainTaskPendingVerification) && <StatusDot color="amber" label="Pending" />}
                     {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
                     <FlagCount remaining={p.flagsRemaining} />
                   </div>
@@ -146,8 +148,8 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-base font-medium">{p.name}</span>
                       <div className="flex items-center gap-1.5">
-                        {p.completedSideTasks.length > 0 && <TaskCount count={p.completedSideTasks.length} />}
-                          {p.sideTaskPendingVerification && <StatusDot color="amber" label="Pending" />}
+                        {((p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)) > 0 && <TaskCount count={(p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)} />}
+                          {(p.sideTaskPendingVerification || p.mainTaskPendingVerification) && <StatusDot color="amber" label="Pending" />}
                           {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
                           <FlagCount remaining={p.flagsRemaining} />
                         </div>
@@ -181,8 +183,8 @@ export default function LeaderboardPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-base font-medium">{p.name}</span>
                       <div className="flex items-center gap-1.5">
-                        {p.completedSideTasks.length > 0 && <TaskCount count={p.completedSideTasks.length} />}
-                        {p.sideTaskPendingVerification && <StatusDot color="amber" label="Pending" />}
+                        {((p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)) > 0 && <TaskCount count={(p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)} />}
+                        {(p.sideTaskPendingVerification || p.mainTaskPendingVerification) && <StatusDot color="amber" label="Pending" />}
                         {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
                         <FlagCount remaining={p.flagsRemaining} />
                       </div>
@@ -208,12 +210,20 @@ export default function LeaderboardPage() {
           </p>
           <div className="space-y-1.5 text-xs text-zinc-500">
             <div className="flex justify-between">
-              <span>Side task verified</span>
+              <span>Side task (secret) verified</span>
+              <span className="font-mono text-emerald-500/70">+5</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Main task verified</span>
               <span className="font-mono text-emerald-500/70">+1</span>
             </div>
             <div className="flex justify-between">
               <span>Correct flag (caught)</span>
               <span className="font-mono text-amber-500/70">+3</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Caught doing side task</span>
+              <span className="font-mono text-red-500/70">-1</span>
             </div>
             <div className="flex justify-between">
               <span>False flag (cleared)</span>

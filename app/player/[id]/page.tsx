@@ -1,40 +1,37 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Suspense } from "react";
 
 interface PlayerInfo {
   _id: string;
   name: string;
-  role: "player" | "monitor";
+  mainTask: string | null;
+  mainTaskPendingVerification: boolean;
   sideTask: string | null;
   sideTaskPendingVerification: boolean;
   sideTaskCompleted: boolean;
 }
 
-export default function PlayerPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = use(params);
+function PlayerContent({ id }: { id: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const verifyHint = searchParams.get("verify");
+
   const [player, setPlayer] = useState<PlayerInfo | null>(null);
   const [me, setMe] = useState<{ _id?: string } | null>(null);
   const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
-  const [verifying, setVerifying] = useState(false);
-  const [verified, setVerified] = useState(false);
+  const [verifying, setVerifying] = useState<string | null>(null);
+  const [verified, setVerified] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState("");
 
   useEffect(() => {
     Promise.all([
       fetch(`/api/players/${id}`).then((r) => r.json()),
-      fetch("/api/me").then((r) => {
-        if (r.ok) return r.json();
-        return null;
-      }),
+      fetch("/api/me").then((r) => (r.ok ? r.json() : null)),
     ])
       .then(([playerData, meData]) => {
         setPlayer(playerData);
@@ -50,25 +47,25 @@ export default function PlayerPage({
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function handleVerify() {
-    setVerifying(true);
+  async function handleVerify(taskType: "main" | "side") {
+    setVerifying(taskType);
     setVerifyError("");
     try {
       const res = await fetch("/api/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId: id }),
+        body: JSON.stringify({ playerId: id, taskType }),
       });
       const data = await res.json();
       if (!res.ok) {
         setVerifyError(data.error || "Something went wrong");
       } else {
-        setVerified(true);
+        setVerified(taskType);
       }
     } catch {
       setVerifyError("Failed to verify");
     } finally {
-      setVerifying(false);
+      setVerifying(null);
     }
   }
 
@@ -103,7 +100,7 @@ export default function PlayerPage({
             </div>
             <p className="text-sm text-muted-foreground">
               <span className="font-medium text-foreground">{player.name}</span>{" "}
-              needs someone to verify their side task. Join the party first to confirm it.
+              needs someone to verify their task. Join the party first to confirm it.
             </p>
             <Button
               onClick={() => router.push("/")}
@@ -119,53 +116,74 @@ export default function PlayerPage({
   }
 
   const isSelf = me?._id === player._id;
-  const canVerify =
-    player.sideTaskPendingVerification && !isSelf && me != null && !verified;
+  const hasPendingMain = player.mainTaskPendingVerification;
+  const hasPendingSide = player.sideTaskPendingVerification;
+  const hasSomethingPending = hasPendingMain || hasPendingSide;
+
+  const showMainVerify = hasPendingMain && !isSelf && verified !== "main";
+  const showSideVerify = hasPendingSide && !isSelf && verified !== "side";
+
+  const preferredType = verifyHint === "main" ? "main" : verifyHint === "side" ? "side" : null;
+
+  const verifyBlocks: { type: "main" | "side"; task: string; points: string; label: string }[] = [];
+  if (showMainVerify) verifyBlocks.push({ type: "main", task: player.mainTask!, points: "+1", label: "Main Task" });
+  if (showSideVerify) verifyBlocks.push({ type: "side", task: player.sideTask!, points: "+5", label: "Side Task" });
+  if (preferredType) {
+    verifyBlocks.sort((a, b) => (a.type === preferredType ? -1 : b.type === preferredType ? 1 : 0));
+  }
 
   return (
     <main className="flex-1 flex items-center justify-center p-4 grid-bg">
       <div className="w-full max-w-sm space-y-5 animate-fade-in-up">
-        {/* Verification request */}
-        {canVerify && (
-          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] p-5 space-y-4">
+        {/* Verification blocks */}
+        {verifyBlocks.map((block) => (
+          <div key={block.type} className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] p-5 space-y-4">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse-glow" />
                 <h2 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">
-                  Verification Requested
+                  {block.label} Verification
                 </h2>
               </div>
               <p className="text-sm text-muted-foreground">
                 <span className="font-medium text-foreground">{player.name}</span>{" "}
-                claims to have completed their side task. Did you witness it?
+                claims to have completed this task. Did you witness it?
               </p>
               <div className="rounded-lg bg-background/50 border border-border/30 p-3">
                 <p className="font-mono text-xs text-muted-foreground/60 uppercase tracking-wider mb-1">
-                  Their task was
+                  Their task was <span className="text-emerald-400/50">({block.points})</span>
                 </p>
-                <p className="text-sm leading-relaxed">{player.sideTask}</p>
+                <p className="text-sm leading-relaxed">{block.task}</p>
               </div>
             </div>
-            {verifyError && (
+            {verifyError && verifying === null && (
               <p className="text-sm text-destructive font-mono">{verifyError}</p>
             )}
             <Button
-              onClick={handleVerify}
-              disabled={verifying}
+              onClick={() => handleVerify(block.type)}
+              disabled={verifying !== null}
               className="w-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
               variant="outline"
             >
-              {verifying ? (
+              {verifying === block.type ? (
                 <span className="font-mono text-xs">VERIFYING...</span>
               ) : (
                 "I confirm they did this"
               )}
             </Button>
           </div>
+        ))}
+
+        {/* Verified confirmations */}
+        {verified === "main" && (
+          <VerifiedBanner name={player.name} points={1} />
+        )}
+        {verified === "side" && (
+          <VerifiedBanner name={player.name} points={5} />
         )}
 
         {/* Self-viewing */}
-        {isSelf && player.sideTaskPendingVerification && (
+        {isSelf && hasSomethingPending && (
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-5 text-center space-y-2">
             <span className="font-mono text-xs text-amber-400 flex items-center justify-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse-glow" />
@@ -177,21 +195,8 @@ export default function PlayerPage({
           </div>
         )}
 
-        {/* Verification confirmed */}
-        {verified && (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-5 text-center space-y-2">
-            <span className="font-mono text-xs text-emerald-400 flex items-center justify-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400" />
-              VERIFIED
-            </span>
-            <p className="text-sm text-muted-foreground">
-              {player.name}&apos;s task has been confirmed. They earned +1 point.
-            </p>
-          </div>
-        )}
-
         {/* No pending verification */}
-        {!player.sideTaskPendingVerification && !verified && (
+        {!hasSomethingPending && !verified && (
           <div className="rounded-xl border border-border/30 bg-card/30 p-5 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
               {player.name} doesn&apos;t have a task pending verification right now.
@@ -201,14 +206,46 @@ export default function PlayerPage({
 
         {/* Navigation */}
         <div className="text-center">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/play")}
-          >
+          <Button variant="outline" onClick={() => router.push("/play")}>
             Back to Dashboard
           </Button>
         </div>
       </div>
     </main>
+  );
+}
+
+function VerifiedBanner({ name, points }: { name: string; points: number }) {
+  return (
+    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-5 text-center space-y-2">
+      <span className="font-mono text-xs text-emerald-400 flex items-center justify-center gap-1.5">
+        <span className="w-2 h-2 rounded-full bg-emerald-400" />
+        VERIFIED
+      </span>
+      <p className="text-sm text-muted-foreground">
+        {name}&apos;s task has been confirmed. They earned +{points} point{points !== 1 ? "s" : ""}.
+      </p>
+    </div>
+  );
+}
+
+export default function PlayerPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  return (
+    <Suspense
+      fallback={
+        <main className="flex-1 flex items-center justify-center grid-bg">
+          <div className="font-mono text-sm text-muted-foreground animate-pulse-glow">
+            LOADING...
+          </div>
+        </main>
+      }
+    >
+      <PlayerContent id={id} />
+    </Suspense>
   );
 }

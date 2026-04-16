@@ -6,7 +6,7 @@ export async function GET() {
   await connectDB();
 
   const players = await Player.find({})
-    .select("name role score sideTaskCompleted sideTaskPendingVerification sideTaskFailed completedSideTasks flagsRemaining")
+    .select("name role score sideTaskCompleted sideTaskPendingVerification sideTaskFailed completedSideTasks mainTaskPendingVerification completedMainTasks flagsRemaining")
     .sort({ score: -1, createdAt: 1 })
     .lean();
 

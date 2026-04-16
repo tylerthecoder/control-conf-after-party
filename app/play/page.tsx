@@ -10,6 +10,8 @@ interface PlayerData {
   name: string;
   role: "player" | "monitor";
   mainTask: string | null;
+  mainTaskPendingVerification: boolean;
+  completedMainTasks: string[];
   sideTask: string | null;
   sideTaskCompleted: boolean;
   sideTaskPendingVerification: boolean;
@@ -36,8 +38,10 @@ export default function PlayPage() {
   const [flagsAgainstMe, setFlagsAgainstMe] = useState<FlagData[]>([]);
   const [flagsByMe, setFlagsByMe] = useState<FlagData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [completing, setCompleting] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [completingMain, setCompletingMain] = useState(false);
+  const [completingSide, setCompletingSide] = useState(false);
+  const [mainQr, setMainQr] = useState<string | null>(null);
+  const [sideQr, setSideQr] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -62,25 +66,33 @@ export default function PlayPage() {
   }, [fetchData]);
 
   useEffect(() => {
-    if (player?.sideTaskPendingVerification && player._id) {
-      const url = `${window.location.origin}/player/${player._id}`;
-      QRCode.toDataURL(url, {
-        width: 200,
-        margin: 2,
-        color: { dark: "#ffffff", light: "#00000000" },
-      }).then(setQrDataUrl).catch(() => {});
-    } else {
-      setQrDataUrl(null);
-    }
-  }, [player?.sideTaskPendingVerification, player?._id]);
+    if (!player?._id) return;
+    const baseUrl = `${window.location.origin}/player/${player._id}`;
+    const qrOpts = { width: 200, margin: 2, color: { dark: "#ffffff", light: "#00000000" } };
 
-  async function handleComplete() {
-    setCompleting(true);
-    const res = await fetch("/api/complete", { method: "POST" });
-    if (res.ok) {
-      await fetchData();
+    if (player.mainTaskPendingVerification) {
+      QRCode.toDataURL(`${baseUrl}?verify=main`, qrOpts).then(setMainQr).catch(() => {});
+    } else {
+      setMainQr(null);
     }
-    setCompleting(false);
+
+    if (player.sideTaskPendingVerification) {
+      QRCode.toDataURL(`${baseUrl}?verify=side`, qrOpts).then(setSideQr).catch(() => {});
+    } else {
+      setSideQr(null);
+    }
+  }, [player?.mainTaskPendingVerification, player?.sideTaskPendingVerification, player?._id]);
+
+  async function handleComplete(taskType: "main" | "side") {
+    const setter = taskType === "main" ? setCompletingMain : setCompletingSide;
+    setter(true);
+    const res = await fetch("/api/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskType }),
+    });
+    if (res.ok) await fetchData();
+    setter(false);
   }
 
   async function handleLogout() {
@@ -100,13 +112,11 @@ export default function PlayPage() {
 
   if (!player) return null;
 
-  const canRequestVerification =
-    !player.sideTaskPendingVerification &&
-    !player.sideTaskFailed;
   const profileUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}/player/${player._id}`
       : "";
+  const totalCompleted = (player.completedMainTasks?.length ?? 0) + (player.completedSideTasks?.length ?? 0);
 
   return (
     <main className="flex-1 grid-bg">
@@ -119,9 +129,9 @@ export default function PlayPage() {
               <span className="font-mono text-lg tabular-nums text-muted-foreground">
                 {player.score}<span className="text-xs ml-1">PTS</span>
               </span>
-              {player.completedSideTasks.length > 0 && (
+              {totalCompleted > 0 && (
                 <span className="font-mono text-xs text-emerald-400/60">
-                  {player.completedSideTasks.length} task{player.completedSideTasks.length !== 1 ? "s" : ""} done
+                  {totalCompleted} task{totalCompleted !== 1 ? "s" : ""} done
                 </span>
               )}
             </div>
@@ -143,88 +153,57 @@ export default function PlayPage() {
         </div>
 
         {/* Main Task */}
-        <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
-          <div className="px-5 py-3 border-b border-border/30">
-            <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">Main Task</h2>
-          </div>
-          <div className="px-5 py-4">
-            <p className="text-[15px] leading-relaxed">{player.mainTask}</p>
-          </div>
-        </section>
+        <TaskSection
+          title="Main Task"
+          pointValue="+1"
+          task={player.mainTask}
+          isPending={player.mainTaskPendingVerification}
+          isCompleting={completingMain}
+          canRequest={!player.mainTaskPendingVerification}
+          onRequest={() => handleComplete("main")}
+          qrDataUrl={mainQr}
+          profileUrl={`${profileUrl}?verify=main`}
+        />
 
         {/* Side Task */}
-        <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
-          <div className="px-5 py-3 border-b border-border/30 flex items-center justify-between">
-            <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-              Side Task <span className="text-destructive/60">(Secret)</span>
-            </h2>
-            {player.sideTaskPendingVerification && (
-              <span className="font-mono text-xs text-amber-400 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-glow" />
-                AWAITING VERIFICATION
-              </span>
-            )}
-            {player.sideTaskFailed && (
-              <span className="font-mono text-xs text-destructive flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-                CAUGHT
-              </span>
-            )}
-          </div>
-          <div className="px-5 py-4 space-y-4">
-            <p className="text-[15px] leading-relaxed">{player.sideTask}</p>
-            {canRequestVerification && (
-              <Button
-                onClick={handleComplete}
-                disabled={completing}
-                variant="outline"
-                className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
-              >
-                {completing ? (
-                  <span className="font-mono text-xs">SUBMITTING...</span>
-                ) : (
-                  "Request Verification"
-                )}
-              </Button>
-            )}
-            {player.sideTaskPendingVerification && (
-              <div className="rounded-lg bg-amber-500/[0.04] border border-amber-500/15 p-4 space-y-4">
-                <p className="text-sm text-amber-400/80">
-                  Show this QR code to another player to verify your task.
-                </p>
-                {qrDataUrl && (
-                  <div className="flex justify-center">
-                    <img
-                      src={qrDataUrl}
-                      alt="Verification QR code"
-                      className="w-48 h-48"
-                    />
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground font-mono break-all text-center">
-                  {profileUrl}
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+        <TaskSection
+          title="Side Task"
+          titleExtra={<span className="text-destructive/60">(Secret)</span>}
+          pointValue="+5"
+          task={player.sideTask}
+          isPending={player.sideTaskPendingVerification}
+          isFailed={player.sideTaskFailed}
+          isCompleting={completingSide}
+          canRequest={!player.sideTaskPendingVerification && !player.sideTaskFailed}
+          onRequest={() => handleComplete("side")}
+          qrDataUrl={sideQr}
+          profileUrl={`${profileUrl}?verify=side`}
+        />
 
-        {/* Completed Side Tasks */}
-        {player.completedSideTasks.length > 0 && (
+        {/* Completed Tasks */}
+        {totalCompleted > 0 && (
           <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden">
             <div className="px-5 py-3 border-b border-emerald-500/10 flex items-center justify-between">
               <h2 className="font-mono text-xs tracking-wider text-emerald-400/80 uppercase">
                 Completed Tasks
               </h2>
               <span className="font-mono text-xs text-emerald-400/40">
-                {player.completedSideTasks.length}
+                {totalCompleted}
               </span>
             </div>
             <div className="divide-y divide-emerald-500/[0.06]">
-              {player.completedSideTasks.map((task, i) => (
-                <div key={i} className="px-5 py-3 flex items-start gap-3">
-                  <span className="font-mono text-xs text-emerald-400/40 mt-0.5 shrink-0">
-                    {i + 1}.
+              {(player.completedMainTasks ?? []).map((task, i) => (
+                <div key={`main-${i}`} className="px-5 py-3 flex items-start gap-3">
+                  <span className="font-mono text-[10px] text-muted-foreground/30 mt-0.5 shrink-0 border border-border/30 rounded px-1">
+                    +1
+                  </span>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{task}</p>
+                </div>
+              ))}
+              {(player.completedSideTasks ?? []).map((task, i) => (
+                <div key={`side-${i}`} className="px-5 py-3 flex items-start gap-3">
+                  <span className="font-mono text-[10px] text-emerald-400/40 mt-0.5 shrink-0 border border-emerald-500/20 rounded px-1">
+                    +5
                   </span>
                   <p className="text-sm text-muted-foreground leading-relaxed">{task}</p>
                 </div>
@@ -337,6 +316,87 @@ export default function PlayPage() {
         )}
       </div>
     </main>
+  );
+}
+
+function TaskSection({
+  title,
+  titleExtra,
+  pointValue,
+  task,
+  isPending,
+  isFailed,
+  isCompleting,
+  canRequest,
+  onRequest,
+  qrDataUrl,
+  profileUrl,
+}: {
+  title: string;
+  titleExtra?: React.ReactNode;
+  pointValue: string;
+  task: string | null;
+  isPending: boolean;
+  isFailed?: boolean;
+  isCompleting: boolean;
+  canRequest: boolean;
+  onRequest: () => void;
+  qrDataUrl: string | null;
+  profileUrl: string;
+}) {
+  return (
+    <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
+      <div className="px-5 py-3 border-b border-border/30 flex items-center justify-between">
+        <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
+          {title} {titleExtra}
+          <span className="ml-2 text-emerald-400/50">({pointValue})</span>
+        </h2>
+        {isPending && (
+          <span className="font-mono text-xs text-amber-400 flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-glow" />
+            AWAITING VERIFICATION
+          </span>
+        )}
+        {isFailed && (
+          <span className="font-mono text-xs text-destructive flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
+            CAUGHT
+          </span>
+        )}
+      </div>
+      <div className="px-5 py-4 space-y-4">
+        <p className="text-[15px] leading-relaxed">{task}</p>
+        {canRequest && !isPending && (
+          <Button
+            onClick={onRequest}
+            disabled={isCompleting}
+            variant="outline"
+            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+          >
+            {isCompleting ? (
+              <span className="font-mono text-xs">SUBMITTING...</span>
+            ) : (
+              "Request Verification"
+            )}
+          </Button>
+        )}
+        {isPending && (
+          <div className="rounded-lg bg-amber-500/[0.04] border border-amber-500/15 p-4 space-y-4">
+            <p className="text-sm text-amber-400/80">
+              Show this QR code to another player to verify your task.
+            </p>
+            {qrDataUrl && (
+              <div className="flex justify-center">
+                <img src={qrDataUrl} alt="Verification QR code" className="w-48 h-48" />
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground font-mono break-all text-center">
+              {profileUrl}
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 

@@ -28,10 +28,10 @@ export default function RulesPage() {
           </div>
           <div className="px-5 py-4 space-y-3 text-sm text-muted-foreground leading-relaxed">
             <p>
-              Every player gets a <span className="text-foreground font-medium">main task</span> (public, just for fun) and a <span className="text-foreground font-medium">side task</span> (secret, for points).
+              Every player gets a <span className="text-foreground font-medium">main task</span> (public, social) and a <span className="text-foreground font-medium">side task</span> (secret, sneaky). Both are worth points when verified by another player.
             </p>
             <p>
-              Your side task is something sneaky you need to pull off at the party without getting caught. Once you complete it, ask another player to scan your QR code and verify it.
+              Complete a task, then ask another player to scan your QR code and confirm they witnessed it. You&apos;ll get a new task after each one.
             </p>
             <p>
               Everyone is also a <span className="text-amber-400 font-medium">monitor</span> — you can flag other players if you think they&apos;re doing something suspicious. An AI auditor will judge whether the flag is valid.
@@ -46,7 +46,8 @@ export default function RulesPage() {
           </div>
           <div className="px-5 py-4">
             <div className="space-y-3">
-              <ScoreRow color="emerald" points="+1" label="Side task verified by another player" />
+              <ScoreRow color="emerald" points="+5" label="Side task (secret) verified by another player" />
+              <ScoreRow color="emerald" points="+1" label="Main task verified by another player" />
               <ScoreRow color="emerald" points="+3" label="You correctly flag someone (they get caught)" />
               <ScoreRow color="red" points="-1" label="You get caught doing your side task" />
               <ScoreRow color="red" points="-2" label="You file a false flag (target is cleared)" />
@@ -57,14 +58,14 @@ export default function RulesPage() {
         {/* Flow */}
         <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
           <div className="px-5 py-3 border-b border-border/30">
-            <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">Side Task Flow</h2>
+            <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">Task Flow</h2>
           </div>
           <div className="px-5 py-4 space-y-3">
-            <Step n={1} text="Complete your secret side task at the party" />
+            <Step n={1} text="Complete your main task (+1) or side task (+5)" />
             <Step n={2} text='Tap "Request Verification" on your dashboard' />
             <Step n={3} text="Show the QR code to someone who witnessed it" />
-            <Step n={4} text="They scan and confirm — you get +1 point" />
-            <Step n={5} text="You get a new side task. Repeat!" />
+            <Step n={4} text="They scan and confirm — you earn points" />
+            <Step n={5} text="You get a new task. Repeat!" />
           </div>
         </section>
 

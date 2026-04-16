@@ -9,7 +9,7 @@ export async function GET(
   const { id } = await params;
   await connectDB();
 
-  const player = await Player.findById(id).select("name role sideTask sideTaskPendingVerification sideTaskCompleted").lean();
+  const player = await Player.findById(id).select("name role mainTask mainTaskPendingVerification sideTask sideTaskPendingVerification sideTaskCompleted").lean();
 
   if (!player) {
     return NextResponse.json({ error: "Player not found" }, { status: 404 });

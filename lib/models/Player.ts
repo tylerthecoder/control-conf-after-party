@@ -4,6 +4,8 @@ export interface IPlayer extends Document {
   name: string;
   role: "player" | "monitor";
   mainTask: string | null;
+  mainTaskPendingVerification: boolean;
+  completedMainTasks: string[];
   sideTask: string | null;
   sideTaskCompleted: boolean;
   sideTaskPendingVerification: boolean;
@@ -19,6 +21,8 @@ const PlayerSchema = new Schema<IPlayer>(
     name: { type: String, required: true, unique: true },
     role: { type: String, enum: ["player", "monitor"], default: "player" },
     mainTask: { type: String, default: null },
+    mainTaskPendingVerification: { type: Boolean, default: false },
+    completedMainTasks: { type: [String], default: [] },
     sideTask: { type: String, default: null },
     sideTaskCompleted: { type: Boolean, default: false },
     sideTaskPendingVerification: { type: Boolean, default: false },
