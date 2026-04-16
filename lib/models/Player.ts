@@ -30,5 +30,8 @@ const PlayerSchema = new Schema<IPlayer>(
   { timestamps: true }
 );
 
-export const Player: Model<IPlayer> =
-  mongoose.models.Player || mongoose.model<IPlayer>("Player", PlayerSchema);
+if (mongoose.models.Player) {
+  delete (mongoose.models as Record<string, unknown>).Player;
+}
+
+export const Player: Model<IPlayer> = mongoose.model<IPlayer>("Player", PlayerSchema);

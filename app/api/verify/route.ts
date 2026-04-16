@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   const completedTask = target.sideTask!;
-  const priorCompleted = target.completedSideTasks ?? [];
+  const priorCompleted: string[] = target.completedSideTasks ?? [];
   const allCompleted = [...priorCompleted, completedTask];
 
   const usedTasks = new Set(allCompleted);
@@ -61,19 +61,16 @@ export async function POST(req: NextRequest) {
       ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
       : sideTasks[Math.floor(Math.random() * sideTasks.length)];
 
-  await Player.collection.updateOne(
-    { _id: target._id },
-    {
-      $push: { completedSideTasks: completedTask },
-      $set: {
-        sideTask: nextTask,
-        sideTaskPendingVerification: false,
-        sideTaskCompleted: false,
-        sideTaskFailed: false,
-      },
-      $inc: { score: 1 },
-    }
-  );
+  await Player.findByIdAndUpdate(target._id, {
+    $push: { completedSideTasks: completedTask },
+    $set: {
+      sideTask: nextTask,
+      sideTaskPendingVerification: false,
+      sideTaskCompleted: false,
+      sideTaskFailed: false,
+    },
+    $inc: { score: 1 },
+  });
 
   return NextResponse.json({
     success: true,
