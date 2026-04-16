@@ -277,6 +277,12 @@ export default function PlayPage() {
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {flag.observation}
                   </p>
+                  {flag.justification && (
+                    <p className="text-sm text-muted-foreground/70 border-l-2 border-border/40 pl-3">
+                      <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Their response: </span>
+                      {flag.justification}
+                    </p>
+                  )}
                   {flag.auditReason && (
                     <p className="text-sm italic text-muted-foreground/80 border-l-2 border-muted-foreground/20 pl-3">
                       {flag.auditReason}
