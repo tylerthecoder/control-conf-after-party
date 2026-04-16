@@ -27,7 +27,9 @@ export async function POST(req: NextRequest) {
 
     const trimmedName = name.trim();
 
-    let player = await Player.findOne({ name: trimmedName });
+    let player = await Player.findOne({
+      name: { $regex: new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    });
 
     if (!player) {
       const mainTask =
