@@ -3,9 +3,8 @@ import mongoose, { Schema, Document, Model, Types } from "mongoose";
 export interface IFlag extends Document {
   monitorId: Types.ObjectId;
   targetId: Types.ObjectId;
-  observation: string;
-  justification: string | null;
-  status: "pending_justification" | "pending_audit" | "cleared" | "caught";
+  guess: string;
+  status: "pending" | "cleared" | "caught";
   auditReason: string | null;
   createdAt: Date;
 }
@@ -14,17 +13,19 @@ const FlagSchema = new Schema<IFlag>(
   {
     monitorId: { type: Schema.Types.ObjectId, ref: "Player", required: true },
     targetId: { type: Schema.Types.ObjectId, ref: "Player", required: true },
-    observation: { type: String, required: true },
-    justification: { type: String, default: null },
+    guess: { type: String, required: true },
     status: {
       type: String,
-      enum: ["pending_justification", "pending_audit", "cleared", "caught"],
-      default: "pending_justification",
+      enum: ["pending", "cleared", "caught"],
+      default: "pending",
     },
     auditReason: { type: String, default: null },
   },
   { timestamps: true }
 );
 
-export const Flag: Model<IFlag> =
-  mongoose.models.Flag || mongoose.model<IFlag>("Flag", FlagSchema);
+if (mongoose.models.Flag) {
+  delete (mongoose.models as Record<string, unknown>).Flag;
+}
+
+export const Flag: Model<IFlag> = mongoose.model<IFlag>("Flag", FlagSchema);

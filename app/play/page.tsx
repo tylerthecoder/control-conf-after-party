@@ -23,8 +23,7 @@ interface PlayerData {
 
 interface FlagData {
   _id: string;
-  observation: string;
-  justification: string | null;
+  guess: string;
   status: string;
   auditReason: string | null;
   createdAt: string;
@@ -40,6 +39,8 @@ export default function PlayPage() {
   const [loading, setLoading] = useState(true);
   const [completingMain, setCompletingMain] = useState(false);
   const [completingSide, setCompletingSide] = useState(false);
+  const [cancelingMain, setCancelingMain] = useState(false);
+  const [cancelingSide, setCancelingSide] = useState(false);
   const [mainQr, setMainQr] = useState<string | null>(null);
   const [sideQr, setSideQr] = useState<string | null>(null);
 
@@ -87,6 +88,18 @@ export default function PlayPage() {
     const setter = taskType === "main" ? setCompletingMain : setCompletingSide;
     setter(true);
     const res = await fetch("/api/complete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ taskType }),
+    });
+    if (res.ok) await fetchData();
+    setter(false);
+  }
+
+  async function handleCancelVerification(taskType: "main" | "side") {
+    const setter = taskType === "main" ? setCancelingMain : setCancelingSide;
+    setter(true);
+    const res = await fetch("/api/cancel-verification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ taskType }),
@@ -161,6 +174,8 @@ export default function PlayPage() {
           isCompleting={completingMain}
           canRequest={!player.mainTaskPendingVerification}
           onRequest={() => handleComplete("main")}
+          onCancel={() => handleCancelVerification("main")}
+          canceling={cancelingMain}
           qrDataUrl={mainQr}
           profileUrl={`${profileUrl}?verify=main`}
         />
@@ -176,6 +191,8 @@ export default function PlayPage() {
           isCompleting={completingSide}
           canRequest={!player.sideTaskPendingVerification && !player.sideTaskFailed}
           onRequest={() => handleComplete("side")}
+          onCancel={() => handleCancelVerification("side")}
+          canceling={cancelingSide}
           qrDataUrl={sideQr}
           profileUrl={`${profileUrl}?verify=side`}
         />
@@ -256,14 +273,9 @@ export default function PlayPage() {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {flag.observation}
+                    <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Your guess: </span>
+                    {flag.guess}
                   </p>
-                  {flag.justification && (
-                    <p className="text-sm text-muted-foreground/70 border-l-2 border-border/40 pl-3">
-                      <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Their response: </span>
-                      {flag.justification}
-                    </p>
-                  )}
                   {flag.auditReason && (
                     <p className="text-sm italic text-muted-foreground/80 border-l-2 border-muted-foreground/20 pl-3">
                       {flag.auditReason}
@@ -292,15 +304,18 @@ export default function PlayPage() {
                     </span>
                     <FlagStatusBadge status={flag.status} />
                   </div>
-                  <p className="text-sm leading-relaxed">{flag.observation}</p>
-                  {flag.status === "pending_justification" && (
+                  <p className="text-sm leading-relaxed">
+                    <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Their guess: </span>
+                    {flag.guess}
+                  </p>
+                  {flag.status === "pending" && (
                     <Button
                       size="sm"
                       onClick={() => router.push(`/respond/${flag._id}`)}
                       className="bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20"
                       variant="outline"
                     >
-                      Submit Defense
+                      Respond
                     </Button>
                   )}
                   {flag.auditReason && (
@@ -328,6 +343,8 @@ function TaskSection({
   isCompleting,
   canRequest,
   onRequest,
+  onCancel,
+  canceling,
   qrDataUrl,
   profileUrl,
 }: {
@@ -340,6 +357,8 @@ function TaskSection({
   isCompleting: boolean;
   canRequest: boolean;
   onRequest: () => void;
+  onCancel: () => void;
+  canceling: boolean;
   qrDataUrl: string | null;
   profileUrl: string;
 }) {
@@ -392,6 +411,17 @@ function TaskSection({
             <p className="text-xs text-muted-foreground font-mono break-all text-center">
               {profileUrl}
             </p>
+            <div className="flex justify-center pt-1">
+              <Button
+                onClick={onCancel}
+                disabled={canceling}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground/60 hover:text-muted-foreground"
+              >
+                {canceling ? "Canceling..." : "Cancel Request"}
+              </Button>
+            </div>
           </div>
         )}
       </div>
@@ -401,18 +431,11 @@ function TaskSection({
 
 function FlagStatusBadge({ status }: { status: string }) {
   switch (status) {
-    case "pending_justification":
+    case "pending":
       return (
         <span className="font-mono text-xs text-amber-400 flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-glow" />
-          AWAITING RESPONSE
-        </span>
-      );
-    case "pending_audit":
-      return (
-        <span className="font-mono text-xs text-blue-400 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse-glow" />
-          UNDER REVIEW
+          PENDING
         </span>
       );
     case "cleared":

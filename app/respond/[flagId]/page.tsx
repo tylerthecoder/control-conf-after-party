@@ -3,11 +3,10 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 
 interface FlagDetail {
   _id: string;
-  observation: string;
+  guess: string;
   status: string;
   auditReason: string | null;
   monitorId: { name: string } | null;
@@ -21,7 +20,6 @@ export default function RespondPage({
   const { flagId } = use(params);
   const router = useRouter();
   const [flag, setFlag] = useState<FlagDetail | null>(null);
-  const [justification, setJustification] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [verdict, setVerdict] = useState<{
@@ -36,8 +34,7 @@ export default function RespondPage({
       .catch(() => {});
   }, [flagId]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleRespond(action: "admit" | "deny") {
     setSubmitting(true);
     setError("");
 
@@ -45,7 +42,7 @@ export default function RespondPage({
       const res = await fetch(`/api/flags/${flagId}/respond`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ justification }),
+        body: JSON.stringify({ action }),
       });
 
       const data = await res.json();
@@ -108,7 +105,9 @@ export default function RespondPage({
 
           <div className="rounded-xl border border-border/50 bg-card/50 p-6">
             <p className="text-sm font-mono text-muted-foreground/60 uppercase tracking-wider mb-2">
-              Auditor&apos;s Ruling
+              {isCaught && verdict.reason === "Target admitted the monitor was right."
+                ? "Self-Report"
+                : "Auditor's Ruling"}
             </p>
             <p className="text-lg italic leading-relaxed">
               &ldquo;{verdict.reason}&rdquo;
@@ -127,13 +126,13 @@ export default function RespondPage({
     );
   }
 
-  if (flag.status !== "pending_justification") {
+  if (flag.status !== "pending") {
     return (
       <main className="flex-1 flex items-center justify-center p-4 grid-bg">
         <div className="w-full max-w-lg space-y-4 text-center animate-fade-in-up">
           <h1 className="text-2xl font-bold">Case Resolved</h1>
           <p className="text-muted-foreground">
-            This flag has already been adjudicated.
+            This flag has already been resolved.
           </p>
           {flag.auditReason && (
             <div className="rounded-xl border border-border/50 bg-card/50 p-6">
@@ -166,53 +165,57 @@ export default function RespondPage({
               </h1>
             </div>
             <p className="text-sm text-muted-foreground">
-              A monitor has reported suspicious behavior. Defend yourself.
+              {flag.monitorId?.name ?? "Someone"} thinks they know your side task.
             </p>
           </div>
 
           <div className="p-6 space-y-5">
             <div className="rounded-lg bg-background/50 border border-border/30 p-4">
               <p className="font-mono text-xs text-muted-foreground/60 uppercase tracking-wider mb-2">
-                Monitor&apos;s Observation
+                Their Guess
               </p>
-              <p className="text-[15px] leading-relaxed">{flag.observation}</p>
+              <p className="text-[15px] leading-relaxed">{flag.guess}</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-                  Your Defense
-                </label>
-                <Textarea
-                  placeholder="Explain what you were actually doing..."
-                  value={justification}
-                  onChange={(e) => setJustification(e.target.value)}
-                  rows={4}
-                  className="bg-background/50 border-border/50 resize-none leading-relaxed"
-                />
-                <p className="text-xs text-muted-foreground/60 font-mono">
-                  An AI auditor will evaluate your response. Be convincing.
-                </p>
-              </div>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Did they get it right?
+              </p>
 
               {error && (
                 <p className="text-sm text-destructive font-mono">{error}</p>
               )}
 
-              <Button
-                type="submit"
-                disabled={submitting || !justification.trim()}
-                className="w-full h-11"
-              >
-                {submitting ? (
-                  <span className="font-mono text-xs animate-pulse-glow">
-                    THE AUDITOR IS DELIBERATING...
-                  </span>
-                ) : (
-                  "Submit Defense"
-                )}
-              </Button>
-            </form>
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => handleRespond("admit")}
+                  disabled={submitting}
+                  className="flex-1 bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/20"
+                  variant="outline"
+                >
+                  {submitting ? (
+                    <span className="font-mono text-xs animate-pulse-glow">PROCESSING...</span>
+                  ) : (
+                    "They caught me"
+                  )}
+                </Button>
+                <Button
+                  onClick={() => handleRespond("deny")}
+                  disabled={submitting}
+                  className="flex-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                  variant="outline"
+                >
+                  {submitting ? (
+                    <span className="font-mono text-xs animate-pulse-glow">AUDITOR DECIDING...</span>
+                  ) : (
+                    "No they didn't"
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground/60 font-mono text-center">
+                Denying sends it to the AI auditor for a ruling.
+              </p>
+            </div>
           </div>
         </div>
       </div>

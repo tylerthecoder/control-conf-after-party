@@ -25,7 +25,7 @@ function FlagForm() {
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [targetId, setTargetId] = useState(prefilledTarget || "");
-  const [observation, setObservation] = useState("");
+  const [guess, setGuess] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -45,7 +45,7 @@ function FlagForm() {
       const res = await fetch("/api/flags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ targetId, observation }),
+        body: JSON.stringify({ targetId, guess }),
       });
 
       const data = await res.json();
@@ -78,10 +78,10 @@ function FlagForm() {
       <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.02] overflow-hidden">
         <div className="px-6 py-4 border-b border-amber-500/10">
           <h1 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">
-            File a Report
+            Flag a Player
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Document suspicious behavior for AI auditor review
+            Think you know what someone&apos;s secret side task is?
           </p>
         </div>
 
@@ -89,7 +89,7 @@ function FlagForm() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <label className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-                Subject
+                Who do you want to flag?
               </label>
               <Select value={targetId} onValueChange={(v) => setTargetId(v ?? "")}>
                 <SelectTrigger className="h-11 bg-background/50 border-border/50">
@@ -109,17 +109,17 @@ function FlagForm() {
 
             <div className="space-y-2">
               <label className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-                Observation
+                What do you think their side task is?
               </label>
               <Textarea
-                placeholder="Describe the suspicious behavior you witnessed..."
-                value={observation}
-                onChange={(e) => setObservation(e.target.value)}
+                placeholder="Describe what you think they've been secretly trying to do..."
+                value={guess}
+                onChange={(e) => setGuess(e.target.value)}
                 rows={4}
                 className="bg-background/50 border-border/50 resize-none leading-relaxed"
               />
               <p className="text-xs text-muted-foreground/60 font-mono">
-                Be specific. The AI auditor will evaluate your claim.
+                They can admit you caught them, or deny it and let the AI auditor decide.
               </p>
             </div>
 
@@ -130,7 +130,7 @@ function FlagForm() {
             <div className="flex gap-3 pt-1">
               <Button
                 type="submit"
-                disabled={submitting || !targetId || !observation.trim()}
+                disabled={submitting || !targetId || !guess.trim()}
                 className="bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20"
                 variant="outline"
               >

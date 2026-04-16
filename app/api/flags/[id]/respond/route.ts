@@ -36,36 +36,30 @@ export async function POST(
     );
   }
 
-  if (flag.status !== "pending_justification") {
+  if (flag.status !== "pending") {
     return NextResponse.json(
       { error: "Already responded to this flag" },
       { status: 400 }
     );
   }
 
-  const { justification } = await req.json();
+  const { action } = await req.json();
 
-  if (!justification?.trim()) {
+  if (action !== "admit" && action !== "deny") {
     return NextResponse.json(
-      { error: "Justification is required" },
+      { error: "Action must be 'admit' or 'deny'" },
       { status: 400 }
     );
   }
 
-  flag.justification = justification.trim();
-  flag.status = "pending_audit";
-  await flag.save();
-
-  const result = await auditFlag(flag.observation, flag.justification!);
-
-  flag.status = result.verdict;
-  flag.auditReason = result.reason;
-  await flag.save();
-
   const monitor = await Player.findById(flag.monitorId);
   const target = await Player.findById(flag.targetId);
 
-  if (result.verdict === "caught") {
+  if (action === "admit") {
+    flag.status = "caught";
+    flag.auditReason = "Target admitted the monitor was right.";
+    await flag.save();
+
     if (target) {
       const priorCompleted: string[] = target.completedSideTasks ?? [];
       const usedTasks = new Set([...priorCompleted, target.sideTask]);
@@ -85,6 +79,48 @@ export async function POST(
         $inc: { score: -1 },
       });
     }
+    if (monitor) {
+      monitor.score += 3;
+      await monitor.save();
+    }
+
+    return NextResponse.json({
+      success: true,
+      verdict: "caught",
+      reason: flag.auditReason,
+    });
+  }
+
+  // action === "deny" — send to the AI auditor
+  if (!target) {
+    return NextResponse.json({ error: "Target not found" }, { status: 404 });
+  }
+
+  const result = await auditFlag(flag.guess, target.sideTask!);
+
+  flag.status = result.verdict;
+  flag.auditReason = result.reason;
+  await flag.save();
+
+  if (result.verdict === "caught") {
+    const priorCompleted: string[] = target.completedSideTasks ?? [];
+    const usedTasks = new Set([...priorCompleted, target.sideTask]);
+    const availableTasks = sideTasks.filter((t) => !usedTasks.has(t));
+    const nextTask =
+      availableTasks.length > 0
+        ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
+        : sideTasks[Math.floor(Math.random() * sideTasks.length)];
+
+    await Player.findByIdAndUpdate(target._id, {
+      $set: {
+        sideTask: nextTask,
+        sideTaskFailed: false,
+        sideTaskCompleted: false,
+        sideTaskPendingVerification: false,
+      },
+      $inc: { score: -1 },
+    });
+
     if (monitor) {
       monitor.score += 3;
       await monitor.save();

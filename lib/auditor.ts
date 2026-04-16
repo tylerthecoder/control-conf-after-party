@@ -1,5 +1,4 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { sideTasks } from "./tasks";
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -11,31 +10,26 @@ interface AuditResult {
 }
 
 export async function auditFlag(
-  observation: string,
-  justification: string
+  guess: string,
+  realSideTask: string
 ): Promise<AuditResult> {
-  const taskList = sideTasks.map((t, i) => `${i + 1}. ${t}`).join("\n");
-
   const response = await client.messages.create({
     model: "claude-sonnet-4-5-20250929",
     max_tokens: 256,
     messages: [
       {
         role: "user",
-        content: `You are the AI Auditor at "The Eval," a party game at an AI safety conference. A monitor flagged a guest for suspicious behavior.
+        content: `You are the AI Auditor at "The Eval," a party game at an AI safety conference. A monitor thinks they've figured out another player's secret side task.
 
-Monitor's observation: "${observation}"
+Monitor's guess: "${guess}"
 
-Guest's justification: "${justification}"
-
-Here is the full list of possible covert side tasks any guest might have:
-${taskList}
+Player's actual side task: "${realSideTask}"
 
 Decide:
-- CAUGHT: the observation clearly describes behavior matching a side task and the justification doesn't convincingly explain it away
-- CLEARED: the justification is plausible or the observation is too vague
+- CAUGHT: the guess clearly demonstrates the monitor figured out what the player's side task is (doesn't need to be word-for-word, just the right idea)
+- CLEARED: the guess doesn't match the real task, or is too vague to count
 
-Be entertaining but fair. Lean toward CLEARED if it's ambiguous — innocent until proven guilty.
+Be entertaining but fair. The guess needs to show real knowledge of the task — vague or generic guesses should be CLEARED.
 
 Respond with ONLY valid JSON, no other text: { "verdict": "caught" or "cleared", "reason": "one witty sentence" }`,
       },

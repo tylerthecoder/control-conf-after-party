@@ -76,13 +76,13 @@ export default function RulesPage() {
           </div>
           <div className="px-5 py-4 space-y-3 text-sm text-muted-foreground leading-relaxed">
             <p>
-              If you see someone acting suspicious, file a report describing what you saw.
+              Think you know what someone&apos;s secret side task is? Flag them and <span className="text-foreground font-medium">describe what you think their task is</span>.
             </p>
             <p>
-              The flagged player gets a chance to defend themselves. Then an <span className="text-foreground font-medium">AI auditor</span> reviews the evidence and makes a ruling.
+              The target gets two choices: <span className="text-destructive font-medium">&quot;They caught me&quot;</span> (self-report, instant resolution) or <span className="text-emerald-400 font-medium">&quot;No they didn&apos;t&quot;</span> (sends your guess to the <span className="text-foreground font-medium">AI auditor</span> who compares it to their real task).
             </p>
             <p>
-              Choose wisely — false flags cost you <span className="text-destructive font-medium">-2 points</span>.
+              Choose wisely — wrong guesses cost you <span className="text-destructive font-medium">-2 points</span>.
             </p>
           </div>
         </section>

@@ -19,18 +19,15 @@ export async function POST(req: NextRequest) {
   await connectDB();
 
   const monitor = await Player.findById(session.playerId);
-  if (!monitor || monitor.role !== "monitor") {
-    return NextResponse.json(
-      { error: "Only monitors can flag" },
-      { status: 403 }
-    );
+  if (!monitor) {
+    return NextResponse.json({ error: "Player not found" }, { status: 404 });
   }
 
-  const { targetId, observation } = await req.json();
+  const { targetId, guess } = await req.json();
 
-  if (!targetId || !observation?.trim()) {
+  if (!targetId || !guess?.trim()) {
     return NextResponse.json(
-      { error: "Target and observation are required" },
+      { error: "Target and guess are required" },
       { status: 400 }
     );
   }
@@ -53,7 +50,7 @@ export async function POST(req: NextRequest) {
   const flag = await Flag.create({
     monitorId: session.playerId,
     targetId,
-    observation: observation.trim(),
+    guess: guess.trim(),
   });
 
   return NextResponse.json({ success: true, flagId: flag._id });
