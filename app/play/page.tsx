@@ -245,7 +245,15 @@ export default function PlayPage() {
                     <span className="font-medium text-sm">
                       {flag.targetId?.name ?? "Unknown"}
                     </span>
-                    <FlagStatusBadge status={flag.status} />
+                    <div className="flex items-center gap-2">
+                      {flag.status === "caught" && (
+                        <span className="font-mono text-xs font-bold text-emerald-400">+3</span>
+                      )}
+                      {flag.status === "cleared" && (
+                        <span className="font-mono text-xs font-bold text-destructive">-2</span>
+                      )}
+                      <FlagStatusBadge status={flag.status} />
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     {flag.observation}
