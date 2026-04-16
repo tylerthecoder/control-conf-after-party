@@ -106,7 +106,9 @@ export default function Home() {
               )}
             </Button>
             <p className="text-center text-xs text-muted-foreground/50 font-mono">
-              You will be assigned a role upon entry
+              <button onClick={() => router.push("/rules")} className="underline underline-offset-2 hover:text-muted-foreground transition-colors">
+                Read the rules
+              </button>
             </p>
           </form>
         ) : (

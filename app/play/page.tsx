@@ -130,6 +130,9 @@ export default function PlayPage() {
             <Button variant="outline" size="sm" onClick={() => router.push("/leaderboard")} className="font-mono text-xs">
               Leaderboard
             </Button>
+            <Button variant="outline" size="sm" onClick={() => router.push("/rules")} className="font-mono text-xs">
+              Rules
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchData} className="font-mono text-xs">
               Refresh
             </Button>
