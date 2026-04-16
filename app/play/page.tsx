@@ -127,6 +127,9 @@ export default function PlayPage() {
             </div>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => router.push("/leaderboard")} className="font-mono text-xs">
+              Leaderboard
+            </Button>
             <Button variant="outline" size="sm" onClick={fetchData} className="font-mono text-xs">
               Refresh
             </Button>
