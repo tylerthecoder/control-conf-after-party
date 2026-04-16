@@ -79,7 +79,10 @@ export default function RulesPage() {
               Think you know what someone&apos;s secret side task is? Flag them and <span className="text-foreground font-medium">describe what you think their task is</span>.
             </p>
             <p>
-              The target gets two choices: <span className="text-destructive font-medium">&quot;They caught me&quot;</span> (self-report, instant resolution) or <span className="text-emerald-400 font-medium">&quot;No they didn&apos;t&quot;</span> (sends your guess to the <span className="text-foreground font-medium">AI auditor</span> who compares it to their real task).
+              The <span className="text-foreground font-medium">AI auditor</span> instantly compares your guess to their real task and delivers a verdict. If you&apos;re right, you get <span className="text-emerald-400 font-medium">+3</span> and they get <span className="text-destructive font-medium">-1</span> plus a new task.
+            </p>
+            <p>
+              Players can also <span className="text-foreground font-medium">self-report</span> from their dashboard if someone catches them — they pick who caught them, and that person gets the +3 points.
             </p>
             <p>
               Choose wisely — wrong guesses cost you <span className="text-destructive font-medium">-2 points</span>.

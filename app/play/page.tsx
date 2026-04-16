@@ -355,16 +355,6 @@ export default function PlayPage() {
                       {flag.guess}
                     </p>
                   )}
-                  {flag.status === "pending" && (
-                    <Button
-                      size="sm"
-                      onClick={() => router.push(`/respond/${flag._id}`)}
-                      className="bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20"
-                      variant="outline"
-                    >
-                      Respond
-                    </Button>
-                  )}
                   {flag.auditReason && (
                     <p className="text-sm italic text-muted-foreground/80 border-l-2 border-muted-foreground/20 pl-3">
                       {flag.auditReason}

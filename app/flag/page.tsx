@@ -18,6 +18,11 @@ interface Player {
   role: string;
 }
 
+interface FlagResult {
+  verdict: "caught" | "cleared";
+  reason: string;
+}
+
 function FlagForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -28,6 +33,7 @@ function FlagForm() {
   const [guess, setGuess] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [result, setResult] = useState<FlagResult | null>(null);
 
   useEffect(() => {
     fetch("/api/players")
@@ -35,6 +41,8 @@ function FlagForm() {
       .then(setPlayers)
       .catch(() => {});
   }, []);
+
+  const targetName = players.find((p) => p._id === targetId)?.name;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,12 +62,48 @@ function FlagForm() {
         return;
       }
 
-      router.push("/play");
+      setResult({ verdict: data.verdict, reason: data.reason });
     } catch {
       setError("Failed to submit flag");
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (result) {
+    const isCaught = result.verdict === "caught";
+    return (
+      <div className="w-full max-w-lg animate-fade-in-up">
+        <div className={`rounded-xl border overflow-hidden ${isCaught ? "border-emerald-500/30 bg-emerald-500/[0.03]" : "border-destructive/30 bg-destructive/[0.03]"}`}>
+          <div className={`px-6 py-4 border-b ${isCaught ? "border-emerald-500/15" : "border-destructive/15"}`}>
+            <div className="flex items-center gap-3">
+              <span className={`font-mono text-xs tracking-wider uppercase ${isCaught ? "text-emerald-400" : "text-destructive"}`}>
+                {isCaught ? "CAUGHT" : "CLEARED"}
+              </span>
+              <span className={`font-mono text-sm font-bold ${isCaught ? "text-emerald-400" : "text-destructive"}`}>
+                {isCaught ? "+3" : "-2"}
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isCaught
+                ? `You correctly identified ${targetName ?? "their"}'s side task!`
+                : `Your guess about ${targetName ?? "them"} was wrong.`}
+            </p>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="rounded-lg bg-background/50 border border-border/30 p-4">
+              <p className="font-mono text-[10px] text-muted-foreground/60 uppercase tracking-wider mb-2">
+                AI Auditor&apos;s Ruling
+              </p>
+              <p className="text-[15px] leading-relaxed italic">{result.reason}</p>
+            </div>
+            <Button onClick={() => router.push("/play")} className="w-full">
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -94,7 +138,7 @@ function FlagForm() {
               <Select value={targetId} onValueChange={(v) => setTargetId(v ?? "")}>
                 <SelectTrigger className="h-11 bg-background/50 border-border/50">
                   <SelectValue placeholder="Select a player...">
-                    {players.find((p) => p._id === targetId)?.name}
+                    {targetName}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -119,7 +163,7 @@ function FlagForm() {
                 className="bg-background/50 border-border/50 resize-none leading-relaxed"
               />
               <p className="text-xs text-muted-foreground/60 font-mono">
-                They can admit you caught them, or deny it and let the AI auditor decide.
+                The AI auditor will compare your guess to their real task and decide instantly.
               </p>
             </div>
 
@@ -135,7 +179,7 @@ function FlagForm() {
                 variant="outline"
               >
                 {submitting ? (
-                  <span className="font-mono text-xs">SUBMITTING...</span>
+                  <span className="font-mono text-xs animate-pulse-glow">AUDITOR DECIDING...</span>
                 ) : (
                   "Submit Flag"
                 )}

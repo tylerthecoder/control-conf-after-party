@@ -5,6 +5,8 @@ import { connectDB } from "@/lib/mongodb";
 import { Player } from "@/lib/models/Player";
 import { Flag } from "@/lib/models/Flag";
 import { sessionOptions, SessionData } from "@/lib/session";
+import { auditFlag } from "@/lib/auditor";
+import { sideTasks } from "@/lib/tasks";
 
 export async function POST(req: NextRequest) {
   const session = await getIronSession<SessionData>(
@@ -47,11 +49,46 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const result = await auditFlag(guess.trim(), target.sideTask!);
+
   const flag = await Flag.create({
     monitorId: session.playerId,
     targetId,
     guess: guess.trim(),
+    status: result.verdict,
+    auditReason: result.reason,
   });
 
-  return NextResponse.json({ success: true, flagId: flag._id });
+  if (result.verdict === "caught") {
+    const priorCompleted: string[] = target.completedSideTasks ?? [];
+    const usedTasks = new Set([...priorCompleted, target.sideTask]);
+    const availableTasks = sideTasks.filter((t) => !usedTasks.has(t));
+    const nextTask =
+      availableTasks.length > 0
+        ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
+        : sideTasks[Math.floor(Math.random() * sideTasks.length)];
+
+    await Player.findByIdAndUpdate(target._id, {
+      $set: {
+        sideTask: nextTask,
+        sideTaskFailed: false,
+        sideTaskCompleted: false,
+        sideTaskPendingVerification: false,
+      },
+      $inc: { score: -1 },
+    });
+
+    monitor.score += 3;
+    await monitor.save();
+  } else {
+    monitor.score -= 2;
+    await monitor.save();
+  }
+
+  return NextResponse.json({
+    success: true,
+    flagId: flag._id,
+    verdict: result.verdict,
+    reason: result.reason,
+  });
 }
