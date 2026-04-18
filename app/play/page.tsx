@@ -15,6 +15,7 @@ interface PlayerData {
   sideTaskPendingVerification: boolean;
   sideTaskFailed: boolean;
   completedSideTasks: string[];
+  sideTaskRerollsRemaining: number;
   score: number;
   flagsRemaining: number;
 }
@@ -38,6 +39,7 @@ export default function PlayPage() {
   const [loading, setLoading] = useState(true);
   const [completingSide, setCompletingSide] = useState(false);
   const [cancelingSide, setCancelingSide] = useState(false);
+  const [rerolling, setRerolling] = useState(false);
   const [selfReporting, setSelfReporting] = useState(false);
   const [showSelfReportPicker, setShowSelfReportPicker] = useState(false);
   const [allPlayers, setAllPlayers] = useState<{ _id: string; name: string }[]>([]);
@@ -86,6 +88,19 @@ export default function PlayPage() {
     });
     if (res.ok) await fetchData();
     setCompletingSide(false);
+  }
+
+  async function handleReroll() {
+    if (rerolling) return;
+    const remaining = player?.sideTaskRerollsRemaining ?? 0;
+    const ok = window.confirm(
+      `Reroll your side task? You'll get a new random one.\n\nYou have ${remaining} reroll${remaining === 1 ? "" : "s"} left (3 total for the night).`
+    );
+    if (!ok) return;
+    setRerolling(true);
+    const res = await fetch("/api/reroll", { method: "POST" });
+    if (res.ok) await fetchData();
+    setRerolling(false);
   }
 
   async function handleCancelSideVerification() {
@@ -200,6 +215,9 @@ export default function PlayPage() {
           selfReportPlayers={allPlayers}
           onSelfReportSelect={handleSelfReport}
           onSelfReportCancel={() => setShowSelfReportPicker(false)}
+          onReroll={handleReroll}
+          rerolling={rerolling}
+          rerollsRemaining={player.sideTaskRerollsRemaining ?? 3}
         />
 
         {/* Completed Tasks */}
@@ -354,6 +372,9 @@ function TaskSection({
   selfReportPlayers,
   onSelfReportSelect,
   onSelfReportCancel,
+  onReroll,
+  rerolling,
+  rerollsRemaining,
 }: {
   title: string;
   titleExtra?: React.ReactNode;
@@ -374,6 +395,9 @@ function TaskSection({
   selfReportPlayers?: { _id: string; name: string }[];
   onSelfReportSelect?: (catcherId: string) => void;
   onSelfReportCancel?: () => void;
+  onReroll?: () => void;
+  rerolling?: boolean;
+  rerollsRemaining?: number;
 }) {
   return (
     <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
@@ -398,7 +422,7 @@ function TaskSection({
       <div className="px-5 py-4 space-y-4">
         <p className="text-[15px] leading-relaxed">{task}</p>
         {canRequest && !isPending && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Button
               onClick={onRequest}
               disabled={isCompleting}
@@ -411,6 +435,24 @@ function TaskSection({
                 "Request Verification"
               )}
             </Button>
+            {onReroll && typeof rerollsRemaining === "number" && (
+              <Button
+                onClick={onReroll}
+                disabled={rerolling || rerollsRemaining <= 0}
+                variant="ghost"
+                size="sm"
+                title={
+                  rerollsRemaining <= 0
+                    ? "No rerolls remaining"
+                    : "Get a new random side task"
+                }
+                className="text-xs text-amber-400/70 hover:text-amber-300 hover:bg-amber-500/10 disabled:opacity-40"
+              >
+                {rerolling
+                  ? "Rerolling..."
+                  : `Reroll task (${rerollsRemaining} left)`}
+              </Button>
+            )}
             {onSelfReport && !showSelfReportPicker && (
               <Button
                 onClick={onSelfReport}

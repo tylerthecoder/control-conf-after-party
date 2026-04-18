@@ -12,6 +12,7 @@ export interface IPlayer extends Document {
   sideTaskPendingVerification: boolean;
   sideTaskFailed: boolean;
   completedSideTasks: string[];
+  sideTaskRerollsRemaining: number;
   score: number;
   flagsRemaining: number;
   createdAt: Date;
@@ -30,6 +31,7 @@ const PlayerSchema = new Schema<IPlayer>(
     sideTaskPendingVerification: { type: Boolean, default: false },
     sideTaskFailed: { type: Boolean, default: false },
     completedSideTasks: { type: [String], default: [] },
+    sideTaskRerollsRemaining: { type: Number, default: 3 },
     score: { type: Number, default: 0 },
     flagsRemaining: { type: Number, default: 0 },
   },
