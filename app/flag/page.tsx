@@ -4,13 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 interface Player {
   _id: string;
@@ -30,6 +24,7 @@ function FlagForm() {
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [targetId, setTargetId] = useState(prefilledTarget || "");
+  const [search, setSearch] = useState("");
   const [guess, setGuess] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -43,6 +38,11 @@ function FlagForm() {
   }, []);
 
   const targetName = players.find((p) => p._id === targetId)?.name;
+
+  const normalizedSearch = search.trim().toLowerCase();
+  const filteredPlayers = normalizedSearch
+    ? players.filter((p) => p.name.toLowerCase().includes(normalizedSearch))
+    : players;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -135,20 +135,62 @@ function FlagForm() {
               <label className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
                 Who do you want to flag?
               </label>
-              <Select value={targetId} onValueChange={(v) => setTargetId(v ?? "")}>
-                <SelectTrigger className="h-11 bg-background/50 border-border/50">
-                  <SelectValue placeholder="Select a player...">
+              {targetId && targetName ? (
+                <div className="flex items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.06] px-3 py-2.5">
+                  <span className="text-sm font-medium text-amber-200">
                     {targetName}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {players.map((p) => (
-                    <SelectItem key={p._id} value={p._id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setTargetId("");
+                      setSearch("");
+                    }}
+                    className="text-xs text-muted-foreground/70 hover:text-muted-foreground"
+                  >
+                    Change
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Input
+                    type="search"
+                    placeholder={`Search ${players.length || ""} players by name...`}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="h-11 bg-background/50 border-border/50"
+                    autoComplete="off"
+                  />
+                  <div className="max-h-64 overflow-y-auto rounded-lg border border-border/40 bg-background/30 divide-y divide-border/20">
+                    {filteredPlayers.length === 0 ? (
+                      <p className="px-3 py-4 text-xs font-mono text-muted-foreground/60 text-center">
+                        No players match &ldquo;{search}&rdquo;
+                      </p>
+                    ) : (
+                      filteredPlayers.map((p) => (
+                        <button
+                          type="button"
+                          key={p._id}
+                          onClick={() => {
+                            setTargetId(p._id);
+                            setSearch("");
+                          }}
+                          className="block w-full text-left px-3 py-2 text-sm hover:bg-amber-500/10 hover:text-amber-200 transition-colors"
+                        >
+                          {p.name}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                  {normalizedSearch && filteredPlayers.length > 0 && (
+                    <p className="text-[11px] font-mono text-muted-foreground/50">
+                      {filteredPlayers.length} match{filteredPlayers.length !== 1 ? "es" : ""}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

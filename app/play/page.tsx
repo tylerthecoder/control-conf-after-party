@@ -3,15 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import QRCode from "qrcode";
 
 interface PlayerData {
   _id: string;
   name: string;
   role: "player" | "monitor";
-  mainTask: string | null;
-  mainTaskPendingVerification: boolean;
-  completedMainTasks: string[];
   sideTask: string | null;
   sideTaskCompleted: boolean;
   sideTaskPendingVerification: boolean;
@@ -38,14 +36,11 @@ export default function PlayPage() {
   const [flagsAgainstMe, setFlagsAgainstMe] = useState<FlagData[]>([]);
   const [flagsByMe, setFlagsByMe] = useState<FlagData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [completingMain, setCompletingMain] = useState(false);
   const [completingSide, setCompletingSide] = useState(false);
-  const [cancelingMain, setCancelingMain] = useState(false);
   const [cancelingSide, setCancelingSide] = useState(false);
   const [selfReporting, setSelfReporting] = useState(false);
   const [showSelfReportPicker, setShowSelfReportPicker] = useState(false);
   const [allPlayers, setAllPlayers] = useState<{ _id: string; name: string }[]>([]);
-  const [mainQr, setMainQr] = useState<string | null>(null);
   const [sideQr, setSideQr] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -75,41 +70,33 @@ export default function PlayPage() {
     const baseUrl = `${window.location.origin}/player/${player._id}`;
     const qrOpts = { width: 200, margin: 2, color: { dark: "#ffffff", light: "#00000000" } };
 
-    if (player.mainTaskPendingVerification) {
-      QRCode.toDataURL(`${baseUrl}?verify=main`, qrOpts).then(setMainQr).catch(() => {});
-    } else {
-      setMainQr(null);
-    }
-
     if (player.sideTaskPendingVerification) {
       QRCode.toDataURL(`${baseUrl}?verify=side`, qrOpts).then(setSideQr).catch(() => {});
     } else {
       setSideQr(null);
     }
-  }, [player?.mainTaskPendingVerification, player?.sideTaskPendingVerification, player?._id]);
+  }, [player?.sideTaskPendingVerification, player?._id]);
 
-  async function handleComplete(taskType: "main" | "side") {
-    const setter = taskType === "main" ? setCompletingMain : setCompletingSide;
-    setter(true);
+  async function handleCompleteSide() {
+    setCompletingSide(true);
     const res = await fetch("/api/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskType }),
+      body: JSON.stringify({ taskType: "side" }),
     });
     if (res.ok) await fetchData();
-    setter(false);
+    setCompletingSide(false);
   }
 
-  async function handleCancelVerification(taskType: "main" | "side") {
-    const setter = taskType === "main" ? setCancelingMain : setCancelingSide;
-    setter(true);
+  async function handleCancelSideVerification() {
+    setCancelingSide(true);
     const res = await fetch("/api/cancel-verification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ taskType }),
+      body: JSON.stringify({ taskType: "side" }),
     });
     if (res.ok) await fetchData();
-    setter(false);
+    setCancelingSide(false);
   }
 
   async function openSelfReportPicker() {
@@ -156,7 +143,7 @@ export default function PlayPage() {
     typeof window !== "undefined"
       ? `${window.location.origin}/player/${player._id}`
       : "";
-  const totalCompleted = (player.completedMainTasks?.length ?? 0) + (player.completedSideTasks?.length ?? 0);
+  const totalCompleted = player.completedSideTasks?.length ?? 0;
 
   return (
     <main className="flex-1 grid-bg">
@@ -192,21 +179,6 @@ export default function PlayPage() {
           </div>
         </div>
 
-        {/* Main Task */}
-        <TaskSection
-          title="Main Task"
-          pointValue="+1"
-          task={player.mainTask}
-          isPending={player.mainTaskPendingVerification}
-          isCompleting={completingMain}
-          canRequest={!player.mainTaskPendingVerification}
-          onRequest={() => handleComplete("main")}
-          onCancel={() => handleCancelVerification("main")}
-          canceling={cancelingMain}
-          qrDataUrl={mainQr}
-          profileUrl={`${profileUrl}?verify=main`}
-        />
-
         {/* Side Task */}
         <TaskSection
           title="Side Task"
@@ -217,8 +189,8 @@ export default function PlayPage() {
           isFailed={player.sideTaskFailed}
           isCompleting={completingSide}
           canRequest={!player.sideTaskPendingVerification && !player.sideTaskFailed}
-          onRequest={() => handleComplete("side")}
-          onCancel={() => handleCancelVerification("side")}
+          onRequest={handleCompleteSide}
+          onCancel={handleCancelSideVerification}
           canceling={cancelingSide}
           qrDataUrl={sideQr}
           profileUrl={`${profileUrl}?verify=side`}
@@ -242,14 +214,6 @@ export default function PlayPage() {
               </span>
             </div>
             <div className="divide-y divide-emerald-500/[0.06]">
-              {(player.completedMainTasks ?? []).map((task, i) => (
-                <div key={`main-${i}`} className="px-5 py-3 flex items-start gap-3">
-                  <span className="font-mono text-[10px] text-muted-foreground/30 mt-0.5 shrink-0 border border-border/30 rounded px-1">
-                    +1
-                  </span>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{task}</p>
-                </div>
-              ))}
               {(player.completedSideTasks ?? []).map((task, i) => (
                 <div key={`side-${i}`} className="px-5 py-3 flex items-start gap-3">
                   <span className="font-mono text-[10px] text-emerald-400/40 mt-0.5 shrink-0 border border-emerald-500/20 rounded px-1">
@@ -461,36 +425,12 @@ function TaskSection({
           </div>
         )}
         {showSelfReportPicker && (
-          <div className="rounded-lg bg-destructive/[0.04] border border-destructive/15 p-4 space-y-3">
-            <p className="text-sm text-destructive/80 font-medium">
-              Who caught you? <span className="text-muted-foreground/60 font-normal">(they&apos;ll get +3 pts, you&apos;ll get -1)</span>
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {selfReportPlayers?.map((p) => (
-                <Button
-                  key={p._id}
-                  onClick={() => onSelfReportSelect?.(p._id)}
-                  disabled={selfReporting}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
-                >
-                  {p.name}
-                </Button>
-              ))}
-            </div>
-            {selfReporting && (
-              <p className="font-mono text-xs text-muted-foreground animate-pulse-glow">REPORTING...</p>
-            )}
-            <Button
-              onClick={onSelfReportCancel}
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground/60 hover:text-muted-foreground"
-            >
-              Cancel
-            </Button>
-          </div>
+          <SelfReportPicker
+            players={selfReportPlayers ?? []}
+            selfReporting={!!selfReporting}
+            onSelect={(id) => onSelfReportSelect?.(id)}
+            onCancel={() => onSelfReportCancel?.()}
+          />
         )}
         {isPending && (
           <div className="rounded-lg bg-amber-500/[0.04] border border-amber-500/15 p-4 space-y-4">
@@ -520,6 +460,74 @@ function TaskSection({
         )}
       </div>
     </section>
+  );
+}
+
+function SelfReportPicker({
+  players,
+  selfReporting,
+  onSelect,
+  onCancel,
+}: {
+  players: { _id: string; name: string }[];
+  selfReporting: boolean;
+  onSelect: (id: string) => void;
+  onCancel: () => void;
+}) {
+  const [search, setSearch] = useState("");
+  const normalized = search.trim().toLowerCase();
+  const filtered = normalized
+    ? players.filter((p) => p.name.toLowerCase().includes(normalized))
+    : players;
+
+  return (
+    <div className="rounded-lg bg-destructive/[0.04] border border-destructive/15 p-4 space-y-3">
+      <p className="text-sm text-destructive/80 font-medium">
+        Who caught you? <span className="text-muted-foreground/60 font-normal">(they&apos;ll get +3 pts, you&apos;ll get -1)</span>
+      </p>
+      <Input
+        type="search"
+        placeholder={`Search ${players.length || ""} players by name...`}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        disabled={selfReporting}
+        autoComplete="off"
+        className="h-10 bg-background/50 border-destructive/20"
+      />
+      <div className="max-h-56 overflow-y-auto -mx-1 px-1">
+        {filtered.length === 0 ? (
+          <p className="px-1 py-3 text-xs font-mono text-muted-foreground/60 text-center">
+            No players match &ldquo;{search}&rdquo;
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {filtered.map((p) => (
+              <Button
+                key={p._id}
+                onClick={() => onSelect(p._id)}
+                disabled={selfReporting}
+                variant="outline"
+                size="sm"
+                className="text-xs border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
+              >
+                {p.name}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+      {selfReporting && (
+        <p className="font-mono text-xs text-muted-foreground animate-pulse-glow">REPORTING...</p>
+      )}
+      <Button
+        onClick={onCancel}
+        variant="ghost"
+        size="sm"
+        className="text-xs text-muted-foreground/60 hover:text-muted-foreground"
+      >
+        Cancel
+      </Button>
+    </div>
   );
 }
 
