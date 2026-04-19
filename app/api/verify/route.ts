@@ -53,11 +53,8 @@ export async function POST(req: NextRequest) {
     const allCompleted = [...priorCompleted, completedTask];
 
     const usedTasks = new Set(allCompleted);
-    const availableTasks = mainTasks.filter((t) => !usedTasks.has(t));
     const nextTask =
-      availableTasks.length > 0
-        ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
-        : mainTasks[Math.floor(Math.random() * mainTasks.length)];
+      mainTasks.find((t) => !usedTasks.has(t)) ?? mainTasks[0];
 
     await Player.findByIdAndUpdate(target._id, {
       $push: { completedMainTasks: completedTask },
@@ -101,11 +98,8 @@ export async function POST(req: NextRequest) {
     const allCompleted = [...priorCompleted, completedTask];
 
     const usedTasks = new Set(allCompleted);
-    const availableTasks = sideTasks.filter((t) => !usedTasks.has(t));
     const nextTask =
-      availableTasks.length > 0
-        ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
-        : sideTasks[Math.floor(Math.random() * sideTasks.length)];
+      sideTasks.find((t) => !usedTasks.has(t)) ?? sideTasks[0];
 
     await Player.findByIdAndUpdate(target._id, {
       $push: { completedSideTasks: completedTask },

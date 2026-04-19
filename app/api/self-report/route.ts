@@ -67,11 +67,8 @@ export async function POST(req: NextRequest) {
 
   const priorCompleted: string[] = player.completedSideTasks ?? [];
   const usedTasks = new Set([...priorCompleted, caughtTask]);
-  const availableTasks = sideTasks.filter((t) => !usedTasks.has(t));
   const nextTask =
-    availableTasks.length > 0
-      ? availableTasks[Math.floor(Math.random() * availableTasks.length)]
-      : sideTasks[Math.floor(Math.random() * sideTasks.length)];
+    sideTasks.find((t) => !usedTasks.has(t)) ?? sideTasks[0];
 
   await Player.findByIdAndUpdate(player._id, {
     $set: {
