@@ -33,7 +33,12 @@ export const sideTasks: string[] = [
   "Try to persuade a redwood employee that LLMs are stochastic parrots",
   "Get a single picture of yourself with people from two out of the following scaling labs: OpenAI, Anthropic, Google, and Meta",
   "Sell someone a control conf hat for a $1 (or an item of equivalent value)",
-  "Get Aryan / Cody / Tyler to give you carrer advice"
+  "Get Aryan / Cody / Tyler / Parv to give you carrer advice",
+  "Bark / Meow in a conversation with another player at least 3 times",
+  "Sing 'let it go' from Frozen to another player",
+  "Get someone to play tik tac toe with you on a 7 by 3 board",
+  "Convince someone to give you their jacket",
+  "Get Tyler Tracy / Cody Rushing / Parv Mahajan to tell you 'I love you'"
 ];
 
 function pickRandom<T>(arr: readonly T[]): T {
