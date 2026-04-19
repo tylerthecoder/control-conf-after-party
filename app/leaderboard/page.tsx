@@ -382,57 +382,43 @@ function ActivityBody({ activity }: { activity: Activity }) {
       );
     case "flag_caught":
       return (
-        <div className="space-y-1">
-          <p className="text-[14px] leading-snug text-foreground/85">
-            <span className="font-medium text-foreground">
-              {activity.playerName}
-            </span>{" "}
-            caught{" "}
-            <span className="font-medium text-foreground">
-              {activity.targetName}
-            </span>
-            {activity.guess &&
-              activity.guess !== "(self-reported)" && (
-                <span className="text-muted-foreground">
-                  {" "}
-                  — &ldquo;{activity.guess}&rdquo;
-                </span>
-              )}
-            {activity.guess === "(self-reported)" && (
-              <span className="text-muted-foreground"> (self-reported)</span>
-            )}
-          </p>
-          {activity.reason && (
-            <p className="border-l border-border/80 pl-3 text-[13px] italic leading-snug text-muted-foreground">
-              {activity.reason}
-            </p>
-          )}
-        </div>
-      );
-    case "flag_cleared":
-      return (
-        <div className="space-y-1">
-          <p className="text-[14px] leading-snug text-foreground/85">
-            <span className="font-medium text-foreground">
-              {activity.playerName}
-            </span>{" "}
-            falsely flagged{" "}
-            <span className="font-medium text-foreground">
-              {activity.targetName}
-            </span>
-            {activity.guess && (
+        <p className="text-[14px] leading-snug text-foreground/85">
+          <span className="font-medium text-foreground">
+            {activity.playerName}
+          </span>{" "}
+          caught{" "}
+          <span className="font-medium text-foreground">
+            {activity.targetName}
+          </span>
+          {activity.guess &&
+            activity.guess !== "(self-reported)" && (
               <span className="text-muted-foreground">
                 {" "}
                 — &ldquo;{activity.guess}&rdquo;
               </span>
             )}
-          </p>
-          {activity.reason && (
-            <p className="border-l border-border/80 pl-3 text-[13px] italic leading-snug text-muted-foreground">
-              {activity.reason}
-            </p>
+          {activity.guess === "(self-reported)" && (
+            <span className="text-muted-foreground"> (self-reported)</span>
           )}
-        </div>
+        </p>
+      );
+    case "flag_cleared":
+      return (
+        <p className="text-[14px] leading-snug text-foreground/85">
+          <span className="font-medium text-foreground">
+            {activity.playerName}
+          </span>{" "}
+          falsely flagged{" "}
+          <span className="font-medium text-foreground">
+            {activity.targetName}
+          </span>
+          {activity.guess && (
+            <span className="text-muted-foreground">
+              {" "}
+              — &ldquo;{activity.guess}&rdquo;
+            </span>
+          )}
+        </p>
       );
   }
 }

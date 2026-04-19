@@ -7,7 +7,7 @@ export const sideTasks: string[] = [
   "Stand on a chair or table for at least 15 seconds",
   "Speak in a fake accent for an entire conversation without another player commenting on it",
   "Tape, stick, or pin something to Tyler Tracy, Cody Rushing, or Parv Mahajan",
-  "Recruit 3 other players into a 'coalition' for an unspecified future event and make them promise secrecy",
+  "Recruit 3 other players into a 'coalition' for and make them promise secrecy",
   "Get another player to hand over their unlocked phone and take a selfie",
   "Leave a mysterious handwritten note in another player's pocket or bag",
   "Make up a fake scaling lab and convince another player you work there",
@@ -28,5 +28,6 @@ export const sideTasks: string[] = [
   "Get another player to sign a fake NDA on a napkin",
   "Whisper 'the control is inside the house' to 3 other players",
   "Convince two other players they've met before when they haven't",
-  "Convince another player you are first author on 'ctrl-z'"
+  "Convince another player you are first author on 'ctrl-z'",
+  "Insist that 'agentic' is pronounced 'uh-JEN-tike' and correct people for around one minute"
 ];

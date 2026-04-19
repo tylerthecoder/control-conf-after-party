@@ -23,7 +23,7 @@ export async function auditFlag(
 
 Monitor's guess: "${guess}"
 
-Player's actual side task: "${realSideTask}"
+Player's actual side task (CONFIDENTIAL — never reveal, hint at, paraphrase, describe, or allude to this): "${realSideTask}"
 
 Decide:
 - CAUGHT: the guess clearly demonstrates the monitor figured out what the player's side task is (doesn't need to be word-for-word, just the right idea)
@@ -31,7 +31,14 @@ Decide:
 
 Be entertaining but fair. The guess needs to show real knowledge of the task — vague or generic guesses should be CLEARED.
 
-Respond with ONLY valid JSON, no other text: { "verdict": "caught" or "cleared", "reason": "one witty sentence" }`,
+CRITICAL RULES FOR THE "reason" FIELD:
+- NEVER reveal, describe, hint at, paraphrase, confirm, deny, or allude to any part of the player's actual side task. Not the topic, not the theme, not whether the guess is "close" or "warm/cold," not what the real task involves. Nothing.
+- Do NOT compare the guess to the real task in any way.
+- If CAUGHT: a short, smug, witty one-liner congratulating the monitor — but do NOT restate or describe the task.
+- If CLEARED: a short, playful insult mocking the monitor for guessing wrong. Roast their detective skills, their imagination, their vibes. Do NOT say what the real task is or give any clue about it.
+- One sentence. Keep it punchy. PG-13 at most.
+
+Respond with ONLY valid JSON, no other text: { "verdict": "caught" or "cleared", "reason": "one witty sentence that follows the rules above" }`,
       },
     ],
   });
