@@ -73,209 +73,249 @@ export default function LeaderboardPage() {
   }, [fetchFeed]);
 
   return (
-    <main className="min-h-screen bg-[#0a0a0f] text-white selection:bg-amber-500/20 overflow-hidden relative">
-      {/* Subtle grid background */}
-      <div className="fixed inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
-        }}
-      />
-
-      {/* Ambient glow */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-amber-500/[0.04] rounded-full blur-[150px] pointer-events-none" />
-
-      <div className="relative max-w-7xl mx-auto px-6 py-8 space-y-10">
-        {/* Header */}
-        <header className="text-center space-y-3">
-          <p className="font-mono text-xs tracking-[0.4em] text-amber-500/50 uppercase">
-            ControlConf 2026 After Party
+    <main className="flex-1">
+      <div className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+        <header className="space-y-4">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Live standings
           </p>
-          <h1 className="text-6xl sm:text-7xl font-bold tracking-tighter">
-            PARTYARENA
+          <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
+            Leaderboard.
           </h1>
-          <div className="flex items-center justify-center gap-3 text-zinc-500">
-            <div className="h-px w-16 bg-gradient-to-r from-transparent to-zinc-700" />
-            <span className="font-mono text-xs tracking-wider uppercase">
-              Live Leaderboard
-            </span>
-            <div className="h-px w-16 bg-gradient-to-l from-transparent to-zinc-700" />
-          </div>
+          <p className="max-w-2xl text-[16px] leading-relaxed text-muted-foreground">
+            Scores update every 10 seconds. The top three are highlighted; the
+            full ranking is below.
+          </p>
         </header>
 
-        {/* Two-column layout: rankings | live feed */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(320px,420px)] gap-8 items-start">
-          {/* LEFT: Rankings */}
-          <div className="space-y-10 min-w-0">
-            {/* Podium for top 3 */}
-            {all.length >= 3 && (
-              <div className="grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-                {[1, 0, 2].map((podiumIndex) => {
-                  const p = all[podiumIndex];
-                  if (!p) return null;
-                  const rank = podiumIndex + 1;
-                  const colors = {
-                    1: { border: "border-amber-400/40", bg: "bg-amber-400/[0.06]", text: "text-amber-400", glow: "shadow-amber-400/10", label: "1ST" },
-                    2: { border: "border-zinc-400/30", bg: "bg-zinc-400/[0.04]", text: "text-zinc-400", glow: "shadow-zinc-400/5", label: "2ND" },
-                    3: { border: "border-amber-700/30", bg: "bg-amber-700/[0.04]", text: "text-amber-700", glow: "", label: "3RD" },
-                  }[rank]!;
+        <div className="hr-rule my-10" />
 
-                  return (
-                    <div
-                      key={p._id}
-                      className={`relative rounded-xl border ${colors.border} ${colors.bg} p-5 text-center ${rank === 1 ? "-mt-2 shadow-lg " + colors.glow : "mt-4"}`}
-                    >
-                      <span className={`font-mono text-xs ${colors.text} tracking-wider`}>
-                        {colors.label}
-                      </span>
-                      <p className="text-xl font-bold mt-2 truncate">{p.name}</p>
-                      <p className={`text-4xl font-bold tabular-nums mt-1 ${colors.text}`}>
-                        {p.score}
-                      </p>
-                      <div className="flex items-center justify-center gap-1.5 mt-3">
-                        {((p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)) > 0 && <TaskCount count={(p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)} />}
-                        {(p.sideTaskPendingVerification || p.mainTaskPendingVerification) && <StatusDot color="amber" label="Pending" />}
-                        {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
-                        <FlagCount remaining={p.flagsRemaining} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_minmax(320px,400px)] lg:items-start">
+          {/* LEFT: rankings */}
+          <div className="space-y-12 min-w-0">
+            {all.length >= 3 && (
+              <Podium players={all.slice(0, 3)} />
             )}
 
-            {/* Full rankings list */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <h2 className="font-mono text-xs tracking-wider text-zinc-500 uppercase">
-                  {all.length >= 3 ? "Full Rankings" : "Rankings"}
-                </h2>
-                <div className="flex-1 h-px bg-zinc-800/50" />
-                <span className="font-mono text-xs text-zinc-700">{all.length}</span>
-              </div>
+            <section className="space-y-4">
+              <SectionHeader
+                title={all.length >= 3 ? "Full rankings" : "Rankings"}
+                count={all.length}
+              />
 
-              <div className="space-y-1">
-                {(all.length >= 3 ? all : []).map((p, i) => {
-                  const rank = i + 1;
-                  const isTop3 = rank <= 3;
-                  return (
-                    <div
-                      key={p._id}
-                      className={`flex items-center justify-between py-3.5 px-5 rounded-lg transition-colors ${
-                        isTop3
-                          ? rank === 1
-                            ? "bg-amber-400/[0.06] border border-amber-400/20"
-                            : rank === 2
-                              ? "bg-zinc-400/[0.03] border border-zinc-400/10"
-                              : "bg-amber-700/[0.03] border border-amber-700/10"
-                          : "bg-white/[0.02] hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className={`font-mono text-lg font-bold w-8 text-right tabular-nums ${
-                          rank === 1 ? "text-amber-400" : rank === 2 ? "text-zinc-400" : rank === 3 ? "text-amber-700" : "text-zinc-600"
-                        }`}>
-                          {rank}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-base font-medium">{p.name}</span>
-                          <div className="flex items-center gap-1.5">
-                            {((p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)) > 0 && <TaskCount count={(p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)} />}
-                              {(p.sideTaskPendingVerification || p.mainTaskPendingVerification) && <StatusDot color="amber" label="Pending" />}
-                              {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
-                              <FlagCount remaining={p.flagsRemaining} />
-                            </div>
-                          </div>
-                        </div>
-                        <span className="text-2xl font-bold tabular-nums">
-                          {p.score}
-                        </span>
-                      </div>
-                    );
-                  })}
-
-                {/* When fewer than 3 players, show simple list */}
-                {all.length > 0 && all.length < 3 && all.map((p, i) => {
-                  const rank = i + 1;
-                  return (
-                    <div
-                      key={p._id}
-                      className={`flex items-center justify-between py-3.5 px-5 rounded-lg transition-colors ${
-                        rank === 1
-                          ? "bg-amber-400/[0.06] border border-amber-400/20"
-                          : "bg-white/[0.02] hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className={`font-mono text-lg font-bold w-8 text-right tabular-nums ${
-                          rank === 1 ? "text-amber-400" : "text-zinc-600"
-                        }`}>
-                          {rank}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <span className="text-base font-medium">{p.name}</span>
-                          <div className="flex items-center gap-1.5">
-                            {((p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)) > 0 && <TaskCount count={(p.completedSideTasks?.length ?? 0) + (p.completedMainTasks?.length ?? 0)} />}
-                            {(p.sideTaskPendingVerification || p.mainTaskPendingVerification) && <StatusDot color="amber" label="Pending" />}
-                            {p.sideTaskFailed && <StatusDot color="red" label="Caught" />}
-                            <FlagCount remaining={p.flagsRemaining} />
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-2xl font-bold tabular-nums">{p.score}</span>
-                    </div>
-                  );
-                })}
-
-                {all.length === 0 && (
-                  <div className="text-center py-16">
-                    <p className="font-mono text-sm text-zinc-700">AWAITING PARTICIPANTS</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
+              {all.length === 0 ? (
+                <p className="px-1 py-12 text-center text-sm text-muted-foreground">
+                  Awaiting participants.
+                </p>
+              ) : (
+                <ul className="divide-y divide-border/70 border-t border-b border-border/70">
+                  {all.map((p, i) => (
+                    <RankingRow key={p._id} player={p} rank={i + 1} />
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
 
-          {/* RIGHT: Live feed */}
-          <aside className="lg:sticky lg:top-8 space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-              </span>
-              <h2 className="font-mono text-xs tracking-wider text-zinc-500 uppercase">
-                Live Feed
-              </h2>
-              <div className="flex-1 h-px bg-zinc-800/50" />
-              <span className="font-mono text-[10px] text-zinc-700">
-                {feedUpdated
-                  ? feedUpdated.toLocaleTimeString().toUpperCase()
-                  : "—"}
-              </span>
+          {/* RIGHT: live feed */}
+          <aside className="lg:sticky lg:top-24 space-y-4">
+            <div className="flex items-center justify-between">
+              <SectionHeader title="Recent activity" count={activities.length} />
             </div>
-
-            <div className="rounded-xl border border-border/30 bg-white/[0.02] p-2 max-h-[75vh] overflow-y-auto">
+            <div className="border-t border-b border-border/70">
               {activities.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="font-mono text-xs text-zinc-700">
-                    NO ACTIVITY YET
-                  </p>
-                </div>
+                <p className="px-1 py-10 text-center text-sm text-muted-foreground">
+                  No activity yet.
+                </p>
               ) : (
-                <ul className="space-y-1">
+                <ul className="divide-y divide-border/70">
                   {activities.map((a) => (
                     <ActivityRow key={a._id} activity={a} />
                   ))}
                 </ul>
               )}
             </div>
-
+            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground/70">
+              Polling every 10s · last 20 events
+              {feedUpdated && (
+                <span className="ml-2 text-muted-foreground/50">
+                  · synced {feedUpdated.toLocaleTimeString()}
+                </span>
+              )}
+            </p>
           </aside>
         </div>
       </div>
     </main>
+  );
+}
+
+function SectionHeader({ title, count }: { title: string; count: number }) {
+  return (
+    <div className="flex items-baseline justify-between">
+      <h2 className="font-serif text-xl tracking-tight text-foreground">
+        {title}
+      </h2>
+      <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        {count}
+      </span>
+    </div>
+  );
+}
+
+function Podium({ players }: { players: LeaderboardPlayer[] }) {
+  // order on screen: 2nd, 1st, 3rd
+  const order = [1, 0, 2];
+  return (
+    <section className="grid grid-cols-3 gap-4 sm:gap-6">
+      {order.map((podiumIndex) => {
+        const p = players[podiumIndex];
+        if (!p) return null;
+        const rank = podiumIndex + 1;
+        const elevated = rank === 1;
+
+        return (
+          <div
+            key={p._id}
+            className={`flex flex-col items-center text-center ${
+              elevated ? "sm:-mt-3" : "sm:mt-2"
+            }`}
+          >
+            <div
+              className={`w-full border bg-card px-4 py-6 ${
+                elevated
+                  ? "border-brand/40 shadow-[0_1px_0_0_var(--border)]"
+                  : "border-border"
+              }`}
+            >
+              <p className="font-serif text-[13px] tracking-[0.04em] text-muted-foreground">
+                {ordinal(rank)}
+              </p>
+              <p className="mt-3 truncate font-serif text-lg text-foreground">
+                {p.name}
+              </p>
+              <p
+                className={`mt-1 font-serif text-4xl tabular-nums ${
+                  elevated ? "text-brand" : "text-foreground"
+                }`}
+              >
+                {p.score}
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1">
+                <PlayerStatusInline player={p} />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function RankingRow({
+  player,
+  rank,
+}: {
+  player: LeaderboardPlayer;
+  rank: number;
+}) {
+  const isTop = rank <= 3;
+  return (
+    <li className="flex items-center gap-4 py-4">
+      <span
+        className={`w-8 shrink-0 text-right font-serif text-base tabular-nums ${
+          isTop ? "text-brand" : "text-muted-foreground"
+        }`}
+      >
+        {rank}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-3">
+          <span className="truncate text-[15px] font-medium text-foreground">
+            {player.name}
+          </span>
+        </div>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+          <PlayerStatusInline player={player} />
+        </div>
+      </div>
+      <span className="font-serif text-2xl tabular-nums text-foreground">
+        {player.score}
+      </span>
+    </li>
+  );
+}
+
+function PlayerStatusInline({ player }: { player: LeaderboardPlayer }) {
+  const taskCount =
+    (player.completedSideTasks?.length ?? 0) +
+    (player.completedMainTasks?.length ?? 0);
+  const pending =
+    player.sideTaskPendingVerification || player.mainTaskPendingVerification;
+  const flagsUsed = 3 - (player.flagsRemaining ?? 3);
+
+  const items: React.ReactNode[] = [];
+  if (taskCount > 0) {
+    items.push(
+      <StatusPill key="tasks" tone="success">
+        {taskCount} task{taskCount !== 1 ? "s" : ""}
+      </StatusPill>
+    );
+  }
+  if (pending) {
+    items.push(
+      <StatusPill key="pending" tone="warning">
+        Pending
+      </StatusPill>
+    );
+  }
+  if (player.sideTaskFailed) {
+    items.push(
+      <StatusPill key="caught" tone="danger">
+        Caught
+      </StatusPill>
+    );
+  }
+  if (flagsUsed > 0) {
+    items.push(
+      <StatusPill key="flags" tone="muted">
+        {flagsUsed} flag{flagsUsed !== 1 ? "s" : ""}
+      </StatusPill>
+    );
+  }
+  return <>{items}</>;
+}
+
+function StatusPill({
+  tone,
+  children,
+}: {
+  tone: "success" | "warning" | "danger" | "muted";
+  children: React.ReactNode;
+}) {
+  const dot =
+    tone === "success"
+      ? "bg-success"
+      : tone === "warning"
+        ? "bg-warning"
+        : tone === "danger"
+          ? "bg-destructive"
+          : "bg-muted-foreground/40";
+  const text =
+    tone === "success"
+      ? "text-success"
+      : tone === "warning"
+        ? "text-foreground/70"
+        : tone === "danger"
+          ? "text-destructive"
+          : "text-muted-foreground";
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.14em] ${text}`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${dot}`} />
+      {children}
+    </span>
   );
 }
 
@@ -288,42 +328,21 @@ function ActivityRow({ activity }: { activity: Activity }) {
   const meta = (() => {
     switch (activity.type) {
       case "side_task_completed":
-        return {
-          color: "text-emerald-400",
-          dot: "bg-emerald-400",
-          label: "SIDE TASK",
-        };
+        return { label: "Side task", tone: "success" as const };
       case "main_task_completed":
-        return {
-          color: "text-emerald-300",
-          dot: "bg-emerald-300",
-          label: "MAIN TASK",
-        };
+        return { label: "Main task", tone: "success" as const };
       case "flag_caught":
-        return {
-          color: "text-amber-400",
-          dot: "bg-amber-400",
-          label: "CAUGHT",
-        };
+        return { label: "Caught", tone: "warning" as const };
       case "flag_cleared":
-        return {
-          color: "text-red-400",
-          dot: "bg-red-400",
-          label: "CLEARED",
-        };
+        return { label: "Cleared", tone: "danger" as const };
     }
   })();
 
   return (
-    <li className="rounded-lg px-3 py-2.5 hover:bg-white/[0.03] transition-colors">
-      <div className="flex items-center gap-2 mb-1">
-        <span className={`w-1.5 h-1.5 rounded-full ${meta.dot} shadow-sm`} />
-        <span
-          className={`font-mono text-[10px] tracking-wider ${meta.color} uppercase`}
-        >
-          {meta.label}
-        </span>
-        <span className="ml-auto font-mono text-[10px] text-zinc-700 tabular-nums">
+    <li className="px-1 py-3">
+      <div className="mb-1 flex items-center gap-2">
+        <StatusPill tone={meta.tone}>{meta.label}</StatusPill>
+        <span className="ml-auto text-[11px] tabular-nums text-muted-foreground/70">
           {time}
         </span>
       </div>
@@ -336,24 +355,27 @@ function ActivityBody({ activity }: { activity: Activity }) {
   switch (activity.type) {
     case "side_task_completed":
       return (
-        <p className="text-sm text-zinc-300 leading-snug">
-          <span className="font-semibold text-white">
+        <p className="text-[14px] leading-snug text-foreground/85">
+          <span className="font-medium text-foreground">
             {activity.playerName}
           </span>{" "}
           completed a side task
           {activity.task && (
-            <span className="text-zinc-500"> — &ldquo;{activity.task}&rdquo;</span>
+            <span className="text-muted-foreground">
+              {" "}
+              — &ldquo;{activity.task}&rdquo;
+            </span>
           )}
         </p>
       );
     case "main_task_completed":
       return (
-        <p className="text-sm text-zinc-300 leading-snug">
-          <span className="font-semibold text-white">
+        <p className="text-[14px] leading-snug text-foreground/85">
+          <span className="font-medium text-foreground">
             {activity.playerName}
           </span>{" "}
           completed{" "}
-          <span className="text-zinc-400">
+          <span className="text-muted-foreground">
             {activity.task ?? "a main task"}
           </span>
         </p>
@@ -361,26 +383,27 @@ function ActivityBody({ activity }: { activity: Activity }) {
     case "flag_caught":
       return (
         <div className="space-y-1">
-          <p className="text-sm text-zinc-300 leading-snug">
-            <span className="font-semibold text-white">
+          <p className="text-[14px] leading-snug text-foreground/85">
+            <span className="font-medium text-foreground">
               {activity.playerName}
             </span>{" "}
             caught{" "}
-            <span className="font-semibold text-white">
+            <span className="font-medium text-foreground">
               {activity.targetName}
             </span>
-            {activity.guess && activity.guess !== "(self-reported)" && (
-              <span className="text-zinc-500">
-                {" "}
-                — &ldquo;{activity.guess}&rdquo;
-              </span>
-            )}
+            {activity.guess &&
+              activity.guess !== "(self-reported)" && (
+                <span className="text-muted-foreground">
+                  {" "}
+                  — &ldquo;{activity.guess}&rdquo;
+                </span>
+              )}
             {activity.guess === "(self-reported)" && (
-              <span className="text-zinc-500"> (self-reported)</span>
+              <span className="text-muted-foreground"> (self-reported)</span>
             )}
           </p>
           {activity.reason && (
-            <p className="text-xs text-zinc-500 italic leading-snug">
+            <p className="border-l border-border/80 pl-3 text-[13px] italic leading-snug text-muted-foreground">
               {activity.reason}
             </p>
           )}
@@ -389,23 +412,23 @@ function ActivityBody({ activity }: { activity: Activity }) {
     case "flag_cleared":
       return (
         <div className="space-y-1">
-          <p className="text-sm text-zinc-300 leading-snug">
-            <span className="font-semibold text-white">
+          <p className="text-[14px] leading-snug text-foreground/85">
+            <span className="font-medium text-foreground">
               {activity.playerName}
             </span>{" "}
             falsely flagged{" "}
-            <span className="font-semibold text-white">
+            <span className="font-medium text-foreground">
               {activity.targetName}
             </span>
             {activity.guess && (
-              <span className="text-zinc-500">
+              <span className="text-muted-foreground">
                 {" "}
                 — &ldquo;{activity.guess}&rdquo;
               </span>
             )}
           </p>
           {activity.reason && (
-            <p className="text-xs text-zinc-500 italic leading-snug">
+            <p className="border-l border-border/80 pl-3 text-[13px] italic leading-snug text-muted-foreground">
               {activity.reason}
             </p>
           )}
@@ -414,41 +437,8 @@ function ActivityBody({ activity }: { activity: Activity }) {
   }
 }
 
-function StatusDot({ color, label }: { color: "emerald" | "red" | "amber"; label: string }) {
-  const colorMap = {
-    emerald: "bg-emerald-400 shadow-emerald-400/50",
-    red: "bg-red-400 shadow-red-400/50",
-    amber: "bg-amber-400 shadow-amber-400/50",
-  };
-  const textMap = {
-    emerald: "text-emerald-400/60",
-    red: "text-red-400/60",
-    amber: "text-amber-400/60",
-  };
-
-  return (
-    <span className={`font-mono text-[10px] tracking-wider ${textMap[color]} flex items-center gap-1`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${colorMap[color]} shadow-sm`} />
-      {label.toUpperCase()}
-    </span>
-  );
-}
-
-function FlagCount({ remaining }: { remaining: number }) {
-  const used = 3 - remaining;
-  if (used === 0) return null;
-  return (
-    <span className="font-mono text-[10px] tracking-wider text-zinc-600 flex items-center gap-1">
-      {used} flag{used !== 1 ? "s" : ""}
-    </span>
-  );
-}
-
-function TaskCount({ count }: { count: number }) {
-  return (
-    <span className="font-mono text-[10px] tracking-wider text-emerald-400/60 flex items-center gap-1">
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
-      {count} task{count !== 1 ? "s" : ""}
-    </span>
-  );
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
 }
