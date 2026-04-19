@@ -399,6 +399,12 @@ function ActivityBody({ activity }: { activity: Activity }) {
           <span className="font-medium text-foreground">
             {activity.targetName}
           </span>
+          {activity.guess && (
+            <span className="text-muted-foreground">
+              {" "}
+              — &ldquo;{activity.guess}&rdquo;
+            </span>
+          )}
         </p>
       );
   }
