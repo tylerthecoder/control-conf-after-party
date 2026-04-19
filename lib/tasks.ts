@@ -7,7 +7,7 @@ export const sideTasks: string[] = [
   "Stand on a chair or table for at least 15 seconds",
   "Speak in a fake accent for an entire conversation without another player commenting on it",
   "Tape, stick, or pin something to Tyler Tracy, Cody Rushing, or Parv Mahajan",
-  "Recruit 3 other players into a 'coalition' for and make them promise secrecy",
+  "Recruit 3 other players into a 'coalition' and make them promise secrecy",
   "Get another player to hand over their unlocked phone and take a selfie",
   "Leave a mysterious handwritten note in another player's pocket or bag",
   "Make up a fake scaling lab and convince another player you work there",
@@ -31,7 +31,9 @@ export const sideTasks: string[] = [
   "Convince another player you are first author on 'ctrl-z'",
   "Insist that 'agentic' is pronounced 'uh-JEN-tike' and correct people for around one minute",
   "Try to persuade a redwood employee that LLMs are stochastic parrots",
-  "Get a single picture of yourself with people from two out of the following scaling labs: OpenAI, Anthropic, Google, and Meta"
+  "Get a single picture of yourself with people from two out of the following scaling labs: OpenAI, Anthropic, Google, and Meta",
+  "Sell someone a control conf hat for a $1 (or an item of equivalent value)",
+  "Get Aryan / Cody / Tyler to give you carrer advice"
 ];
 
 function pickRandom<T>(arr: readonly T[]): T {
