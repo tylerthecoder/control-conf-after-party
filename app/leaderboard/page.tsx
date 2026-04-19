@@ -360,12 +360,6 @@ function ActivityBody({ activity }: { activity: Activity }) {
             {activity.playerName}
           </span>{" "}
           completed a side task
-          {activity.task && (
-            <span className="text-muted-foreground">
-              {" "}
-              — &ldquo;{activity.task}&rdquo;
-            </span>
-          )}
         </p>
       );
     case "main_task_completed":
