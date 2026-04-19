@@ -43,7 +43,9 @@ export default function PlayPage() {
   const [showRerollConfirm, setShowRerollConfirm] = useState(false);
   const [selfReporting, setSelfReporting] = useState(false);
   const [showSelfReportPicker, setShowSelfReportPicker] = useState(false);
-  const [allPlayers, setAllPlayers] = useState<{ _id: string; name: string }[]>([]);
+  const [allPlayers, setAllPlayers] = useState<
+    { _id: string; name: string }[]
+  >([]);
   const [sideQr, setSideQr] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
@@ -71,10 +73,16 @@ export default function PlayPage() {
   useEffect(() => {
     if (!player?._id) return;
     const baseUrl = `${window.location.origin}/player/${player._id}`;
-    const qrOpts = { width: 200, margin: 2, color: { dark: "#ffffff", light: "#00000000" } };
+    const qrOpts = {
+      width: 220,
+      margin: 2,
+      color: { dark: "#1f1d18", light: "#00000000" },
+    };
 
     if (player.sideTaskPendingVerification) {
-      QRCode.toDataURL(`${baseUrl}?verify=side`, qrOpts).then(setSideQr).catch(() => {});
+      QRCode.toDataURL(`${baseUrl}?verify=side`, qrOpts)
+        .then(setSideQr)
+        .catch(() => {});
     } else {
       setSideQr(null);
     }
@@ -121,8 +129,12 @@ export default function PlayPage() {
     try {
       const res = await fetch("/api/players");
       const data = await res.json();
-      setAllPlayers(data.filter((p: { _id: string }) => p._id !== player?._id));
-    } catch { /* ignore */ }
+      setAllPlayers(
+        data.filter((p: { _id: string }) => p._id !== player?._id)
+      );
+    } catch {
+      /* ignore */
+    }
   }
 
   async function handleSelfReport(catcherId: string) {
@@ -146,10 +158,8 @@ export default function PlayPage() {
 
   if (loading) {
     return (
-      <main className="flex-1 flex items-center justify-center grid-bg">
-        <div className="font-mono text-sm text-muted-foreground animate-pulse-glow">
-          LOADING DOSSIER...
-        </div>
+      <main className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading dossier…</p>
       </main>
     );
   }
@@ -163,46 +173,57 @@ export default function PlayPage() {
   const totalCompleted = player.completedSideTasks?.length ?? 0;
 
   return (
-    <main className="flex-1 grid-bg">
-      <div className="max-w-2xl mx-auto w-full p-4 sm:p-6 space-y-5">
+    <main className="flex-1">
+      <div className="mx-auto w-full max-w-3xl space-y-10 px-5 py-10 sm:px-8 sm:py-14">
         {/* Header */}
-        <div className="flex items-start justify-between pt-2">
+        <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{player.name}</h1>
-            <div className="flex items-center gap-3 mt-2">
-              <span className="font-mono text-lg tabular-nums text-muted-foreground">
-                {player.score}<span className="text-xs ml-1">PTS</span>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              Your dossier
+            </p>
+            <h1 className="mt-2 font-serif text-4xl tracking-tight text-foreground">
+              {player.name}
+            </h1>
+            <div className="mt-3 flex items-baseline gap-3">
+              <span className="font-serif text-2xl tabular-nums text-foreground">
+                {player.score}
+              </span>
+              <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Points
               </span>
               {totalCompleted > 0 && (
-                <span className="font-mono text-xs text-emerald-400/60">
-                  {totalCompleted} task{totalCompleted !== 1 ? "s" : ""} done
-                </span>
+                <>
+                  <span className="text-border">·</span>
+                  <span className="text-[13px] text-success">
+                    {totalCompleted} task{totalCompleted !== 1 ? "s" : ""} done
+                  </span>
+                </>
               )}
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => router.push("/leaderboard")} className="font-mono text-xs">
-              Leaderboard
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push("/rules")} className="font-mono text-xs">
-              Rules
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs text-muted-foreground">
-              Logout
-            </Button>
-          </div>
-        </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleLogout}
+            className="text-xs"
+          >
+            Sign out
+          </Button>
+        </header>
+
+        <div className="hr-rule" />
 
         {/* Side Task */}
         <TaskSection
-          title="Side Task"
-          titleExtra={<span className="text-destructive/60">(Secret)</span>}
-          pointValue="+5"
+          title="Side task"
+          subtitle="Secret · +5 when verified"
           task={player.sideTask}
           isPending={player.sideTaskPendingVerification}
           isFailed={player.sideTaskFailed}
           isCompleting={completingSide}
-          canRequest={!player.sideTaskPendingVerification && !player.sideTaskFailed}
+          canRequest={
+            !player.sideTaskPendingVerification && !player.sideTaskFailed
+          }
           onRequest={handleCompleteSide}
           onCancel={handleCancelSideVerification}
           canceling={cancelingSide}
@@ -219,132 +240,143 @@ export default function PlayPage() {
           rerollsRemaining={player.sideTaskRerollsRemaining ?? 3}
         />
 
-        {/* Completed Tasks */}
-        {totalCompleted > 0 && (
-          <section className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] overflow-hidden">
-            <div className="px-5 py-3 border-b border-emerald-500/10 flex items-center justify-between">
-              <h2 className="font-mono text-xs tracking-wider text-emerald-400/80 uppercase">
-                Completed Tasks
-              </h2>
-              <span className="font-mono text-xs text-emerald-400/40">
-                {totalCompleted}
-              </span>
-            </div>
-            <div className="divide-y divide-emerald-500/[0.06]">
-              {(player.completedSideTasks ?? []).map((task, i) => (
-                <div key={`side-${i}`} className="px-5 py-3 flex items-start gap-3">
-                  <span className="font-mono text-[10px] text-emerald-400/40 mt-0.5 shrink-0 border border-emerald-500/20 rounded px-1">
-                    +5
-                  </span>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{task}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Flag Others */}
-        <section className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] overflow-hidden">
-          <div className="px-5 py-3 border-b border-amber-500/10">
-            <h2 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">
-              Flag Others
-            </h2>
-          </div>
-          <div className="px-5 py-4">
-            <Button
-              onClick={() => router.push("/flag")}
-              variant="outline"
-              className="border-amber-500/30 text-amber-400 hover:bg-amber-500/10"
-            >
-              Flag Suspicious Behavior
+        <Section title="Flag another player" subtitle="Catch a side task">
+          <p className="text-[15px] leading-relaxed text-muted-foreground">
+            Suspect what someone else&apos;s secret task is? File a flag — the
+            AI auditor decides instantly. Correct: <span className="text-success">+3</span>.
+            Wrong: <span className="text-destructive">−2</span>.
+          </p>
+          <div className="pt-1">
+            <Button onClick={() => router.push("/flag")} variant="outline">
+              Flag suspicious behavior →
             </Button>
           </div>
-        </section>
+        </Section>
 
-        {/* Flags I've Filed */}
-        {flagsByMe.length > 0 && (
-          <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
-            <div className="px-5 py-3 border-b border-border/30">
-              <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-                Filed Reports
-              </h2>
-            </div>
-            <div className="divide-y divide-border/30">
-              {flagsByMe.map((flag) => (
-                <div key={flag._id} className="px-5 py-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">
-                      {flag.targetId?.name ?? "Unknown"}
-                      {flag.selfReport && (
-                        <span className="ml-2 font-mono text-[10px] text-muted-foreground/40">(they self-reported)</span>
-                      )}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {flag.status === "caught" && (
-                        <span className="font-mono text-xs font-bold text-emerald-400">+3</span>
-                      )}
-                      {flag.status === "cleared" && (
-                        <span className="font-mono text-xs font-bold text-destructive">-2</span>
-                      )}
-                      <FlagStatusBadge status={flag.status} />
-                    </div>
-                  </div>
-                  {!flag.selfReport && (
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Your guess: </span>
-                      {flag.guess}
-                    </p>
-                  )}
-                  {flag.auditReason && (
-                    <p className="text-sm italic text-muted-foreground/80 border-l-2 border-muted-foreground/20 pl-3">
-                      {flag.auditReason}
-                    </p>
-                  )}
-                </div>
+        {/* Completed */}
+        {totalCompleted > 0 && (
+          <Section title="Verified tasks" count={totalCompleted}>
+            <ul className="-mt-1 divide-y divide-border/70 border-t border-b border-border/70">
+              {(player.completedSideTasks ?? []).map((task, i) => (
+                <li
+                  key={`side-${i}`}
+                  className="flex items-start gap-4 py-3"
+                >
+                  <span className="mt-0.5 inline-flex shrink-0 items-center justify-center rounded border border-success/40 bg-success/10 px-1.5 py-0.5 font-mono text-[11px] tabular-nums text-success">
+                    +5
+                  </span>
+                  <p className="text-[14.5px] leading-relaxed text-foreground/85">
+                    {task}
+                  </p>
+                </li>
               ))}
-            </div>
-          </section>
+            </ul>
+          </Section>
         )}
 
-        {/* Flags Against Me */}
-        {flagsAgainstMe.length > 0 && (
-          <section className="rounded-xl border border-destructive/20 bg-destructive/[0.03] overflow-hidden">
-            <div className="px-5 py-3 border-b border-destructive/10">
-              <h2 className="font-mono text-xs tracking-wider text-destructive/70 uppercase">
-                Flags Against You
-              </h2>
-            </div>
-            <div className="divide-y divide-destructive/10">
-              {flagsAgainstMe.map((flag) => (
-                <div key={flag._id} className="px-5 py-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">
-                      {flag.selfReport
-                        ? <>Self-reported — caught by {flag.monitorId?.name ?? "Unknown"}</>
-                        : <>Flagged by {flag.monitorId?.name ?? "Unknown"}</>}
+        {/* Flags I've filed */}
+        {flagsByMe.length > 0 && (
+          <Section title="Flags you've filed" count={flagsByMe.length}>
+            <ul className="divide-y divide-border/70 border-t border-b border-border/70">
+              {flagsByMe.map((flag) => (
+                <li key={flag._id} className="space-y-2 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[15px] font-medium text-foreground">
+                      {flag.targetId?.name ?? "Unknown"}
+                      {flag.selfReport && (
+                        <span className="ml-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                          (they self-reported)
+                        </span>
+                      )}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {flag.status === "caught" && (
-                        <span className="font-mono text-xs font-bold text-destructive">-1</span>
+                        <span className="font-mono text-sm tabular-nums text-success">
+                          +3
+                        </span>
+                      )}
+                      {flag.status === "cleared" && (
+                        <span className="font-mono text-sm tabular-nums text-destructive">
+                          −2
+                        </span>
                       )}
                       <FlagStatusBadge status={flag.status} />
                     </div>
                   </div>
                   {!flag.selfReport && (
-                    <p className="text-sm leading-relaxed">
-                      <span className="font-mono text-[10px] text-muted-foreground/40 uppercase tracking-wider">Their guess: </span>
+                    <p className="text-sm leading-relaxed text-foreground/80">
+                      <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                        Your guess —{" "}
+                      </span>
                       {flag.guess}
                     </p>
                   )}
                   {flag.auditReason && (
-                    <p className="text-sm italic text-muted-foreground/80 border-l-2 border-muted-foreground/20 pl-3">
+                    <p className="border-l border-border/80 pl-3 text-sm italic leading-relaxed text-muted-foreground">
                       {flag.auditReason}
                     </p>
                   )}
-                </div>
+                </li>
               ))}
-            </div>
-          </section>
+            </ul>
+          </Section>
+        )}
+
+        {/* Flags against me */}
+        {flagsAgainstMe.length > 0 && (
+          <Section
+            title="Flags against you"
+            count={flagsAgainstMe.length}
+            tone="danger"
+          >
+            <ul className="divide-y divide-border/70 border-t border-b border-border/70">
+              {flagsAgainstMe.map((flag) => (
+                <li key={flag._id} className="space-y-3 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-[14px] text-muted-foreground">
+                      {flag.selfReport ? (
+                        <>
+                          Self-reported — caught by{" "}
+                          <span className="font-medium text-foreground">
+                            {flag.monitorId?.name ?? "Unknown"}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          Flagged by{" "}
+                          <span className="font-medium text-foreground">
+                            {flag.monitorId?.name ?? "Unknown"}
+                          </span>
+                        </>
+                      )}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      {flag.status === "caught" && (
+                        <span className="font-mono text-sm tabular-nums text-destructive">
+                          −1
+                        </span>
+                      )}
+                      <FlagStatusBadge status={flag.status} />
+                    </div>
+                  </div>
+                  {!flag.selfReport && (
+                    <p className="text-sm leading-relaxed text-foreground/85">
+                      <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                        Their guess —{" "}
+                      </span>
+                      {flag.guess}
+                    </p>
+                  )}
+                  {flag.auditReason && (
+                    <p className="border-l border-destructive/40 pl-3 text-sm italic leading-relaxed text-muted-foreground">
+                      {flag.auditReason}
+                    </p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Section>
         )}
       </div>
 
@@ -359,6 +391,45 @@ export default function PlayPage() {
         }}
       />
     </main>
+  );
+}
+
+function Section({
+  title,
+  subtitle,
+  count,
+  tone,
+  children,
+}: {
+  title: React.ReactNode;
+  subtitle?: string;
+  count?: number;
+  tone?: "default" | "danger";
+  children: React.ReactNode;
+}) {
+  const titleColor =
+    tone === "danger" ? "text-destructive" : "text-foreground";
+  return (
+    <section className="space-y-4">
+      <div className="flex items-baseline justify-between gap-3">
+        <div>
+          <h2 className={`font-serif text-2xl tracking-tight ${titleColor}`}>
+            {title}
+          </h2>
+          {subtitle && (
+            <p className="mt-1 text-[12px] uppercase tracking-[0.18em] text-muted-foreground">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        {typeof count === "number" && (
+          <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            {count}
+          </span>
+        )}
+      </div>
+      <div className="space-y-3">{children}</div>
+    </section>
   );
 }
 
@@ -408,88 +479,70 @@ function RerollConfirmModal({
         aria-label="Close"
         onClick={onCancel}
         disabled={rerolling}
-        className="absolute inset-0 bg-background/70 backdrop-blur-sm animate-fade-in-up cursor-default"
+        className="absolute inset-0 cursor-default bg-foreground/30 backdrop-blur-[2px] animate-fade-in-up"
       />
 
-      <div className="relative w-full max-w-md rounded-xl border border-amber-500/30 bg-card shadow-2xl shadow-amber-500/10 overflow-hidden animate-fade-in-up">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
-
-        <div className="px-6 pt-6 pb-4 space-y-4">
-          <div className="flex items-start gap-4">
-            <div className="shrink-0 w-12 h-12 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-6 h-6 text-amber-400"
-              >
-                <rect x="3" y="3" width="18" height="18" rx="3" />
-                <circle cx="8" cy="8" r="1.2" fill="currentColor" />
-                <circle cx="16" cy="8" r="1.2" fill="currentColor" />
-                <circle cx="12" cy="12" r="1.2" fill="currentColor" />
-                <circle cx="8" cy="16" r="1.2" fill="currentColor" />
-                <circle cx="16" cy="16" r="1.2" fill="currentColor" />
-              </svg>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-mono text-[10px] tracking-[0.25em] text-amber-400/70 uppercase">
-                Confirm Action
-              </p>
-              <h3 id="reroll-title" className="text-xl font-semibold tracking-tight mt-0.5">
-                Reroll your side task?
-              </h3>
-            </div>
+      <div className="relative w-full max-w-md overflow-hidden rounded-md border border-border bg-card shadow-xl animate-fade-in-up">
+        <div className="space-y-4 px-6 pt-6 pb-4">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              Confirm action
+            </p>
+            <h3
+              id="reroll-title"
+              className="mt-1 font-serif text-2xl tracking-tight text-foreground"
+            >
+              Reroll your side task?
+            </h3>
           </div>
 
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            You&apos;ll get a brand new random side task. Your current one will be
-            discarded and cannot be recovered.
+          <p className="text-[14.5px] leading-relaxed text-muted-foreground">
+            You&apos;ll be given the next available side task. Your current one
+            will be discarded and cannot be recovered.
           </p>
 
           {currentTask && (
-            <div className="rounded-lg border border-border/50 bg-background/40 px-4 py-3">
-              <p className="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase mb-1.5">
+            <div className="rounded-md border border-border bg-paper-soft px-4 py-3">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                 Current task
               </p>
-              <p className="text-sm leading-relaxed line-clamp-3">{currentTask}</p>
+              <p className="mt-1 line-clamp-3 text-[14px] leading-relaxed text-foreground/85">
+                {currentTask}
+              </p>
             </div>
           )}
 
-          <div className="flex items-center justify-between rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+          <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-paper-soft px-4 py-3">
             <div>
-              <p className="font-mono text-[10px] tracking-wider text-amber-400/70 uppercase">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                 Rerolls remaining
               </p>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                <span className="font-mono tabular-nums text-amber-300">
+              <p className="mt-1 text-sm text-muted-foreground">
+                <span className="font-mono tabular-nums text-foreground">
                   {rerollsRemaining}
                 </span>{" "}
-                of <span className="font-mono tabular-nums">3</span> for the night
+                of <span className="font-mono tabular-nums">3</span> for the
+                night
               </p>
             </div>
             <div className="text-right">
-              <p className="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
                 After this
               </p>
-              <p className="font-mono text-lg tabular-nums text-amber-200 mt-0.5">
+              <p className="mt-1 font-serif text-2xl tabular-nums text-brand">
                 {remainingAfter}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-border/40 bg-background/30 flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 border-t border-border bg-paper-soft px-6 py-3">
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={onCancel}
             disabled={rerolling}
-            className="text-xs text-muted-foreground hover:text-foreground"
           >
             Cancel
           </Button>
@@ -497,11 +550,9 @@ function RerollConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={rerolling}
-            variant="outline"
             size="sm"
-            className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 hover:text-amber-200 font-mono text-xs tracking-wide"
           >
-            {rerolling ? "REROLLING..." : "REROLL TASK"}
+            {rerolling ? "Rerolling…" : "Reroll task"}
           </Button>
         </div>
       </div>
@@ -511,8 +562,7 @@ function RerollConfirmModal({
 
 function TaskSection({
   title,
-  titleExtra,
-  pointValue,
+  subtitle,
   task,
   isPending,
   isFailed,
@@ -534,8 +584,7 @@ function TaskSection({
   rerollsRemaining,
 }: {
   title: string;
-  titleExtra?: React.ReactNode;
-  pointValue: string;
+  subtitle: string;
   task: string | null;
   isPending: boolean;
   isFailed?: boolean;
@@ -557,40 +606,39 @@ function TaskSection({
   rerollsRemaining?: number;
 }) {
   return (
-    <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
-      <div className="px-5 py-3 border-b border-border/30 flex items-center justify-between">
-        <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-          {title} {titleExtra}
-          <span className="ml-2 text-emerald-400/50">({pointValue})</span>
-        </h2>
+    <section className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="font-serif text-2xl tracking-tight text-foreground">
+            {title}
+          </h2>
+          <p className="mt-1 text-[12px] uppercase tracking-[0.18em] text-muted-foreground">
+            {subtitle}
+          </p>
+        </div>
         {isPending && (
-          <span className="font-mono text-xs text-amber-400 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-glow" />
-            AWAITING VERIFICATION
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-foreground/70">
+            <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+            Awaiting verification
           </span>
         )}
         {isFailed && (
-          <span className="font-mono text-xs text-destructive flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-            CAUGHT
+          <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-destructive">
+            <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+            Caught
           </span>
         )}
       </div>
-      <div className="px-5 py-4 space-y-4">
-        <p className="text-[15px] leading-relaxed">{task}</p>
+
+      <div className="border border-border bg-card p-5 sm:p-6">
+        <p className="font-serif text-[19px] leading-snug text-foreground">
+          {task ?? "—"}
+        </p>
+
         {canRequest && !isPending && (
-          <div className="flex items-center gap-3 flex-wrap">
-            <Button
-              onClick={onRequest}
-              disabled={isCompleting}
-              variant="outline"
-              className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
-            >
-              {isCompleting ? (
-                <span className="font-mono text-xs">SUBMITTING...</span>
-              ) : (
-                "Request Verification"
-              )}
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            <Button onClick={onRequest} disabled={isCompleting}>
+              {isCompleting ? "Submitting…" : "Request verification"}
             </Button>
             {onReroll && typeof rerollsRemaining === "number" && (
               <Button
@@ -601,13 +649,12 @@ function TaskSection({
                 title={
                   rerollsRemaining <= 0
                     ? "No rerolls remaining"
-                    : "Get a new random side task"
+                    : "Get a new side task"
                 }
-                className="text-xs text-amber-400/70 hover:text-amber-300 hover:bg-amber-500/10 disabled:opacity-40"
               >
                 {rerolling
-                  ? "Rerolling..."
-                  : `Reroll task (${rerollsRemaining} left)`}
+                  ? "Rerolling…"
+                  : `Reroll (${rerollsRemaining} left)`}
               </Button>
             )}
             {onSelfReport && !showSelfReportPicker && (
@@ -616,43 +663,50 @@ function TaskSection({
                 disabled={selfReporting}
                 variant="ghost"
                 size="sm"
-                className="text-xs text-destructive/60 hover:text-destructive hover:bg-destructive/10"
+                className="text-destructive/80 hover:text-destructive"
               >
                 Somebody caught me
               </Button>
             )}
           </div>
         )}
+
         {showSelfReportPicker && (
-          <SelfReportPicker
-            players={selfReportPlayers ?? []}
-            selfReporting={!!selfReporting}
-            onSelect={(id) => onSelfReportSelect?.(id)}
-            onCancel={() => onSelfReportCancel?.()}
-          />
+          <div className="mt-5">
+            <SelfReportPicker
+              players={selfReportPlayers ?? []}
+              selfReporting={!!selfReporting}
+              onSelect={(id) => onSelfReportSelect?.(id)}
+              onCancel={() => onSelfReportCancel?.()}
+            />
+          </div>
         )}
+
         {isPending && (
-          <div className="rounded-lg bg-amber-500/[0.04] border border-amber-500/15 p-4 space-y-4">
-            <p className="text-sm text-amber-400/80">
-              Show this QR code to another player to verify your task.
+          <div className="mt-5 border-t border-border pt-5">
+            <p className="text-[14px] leading-relaxed text-muted-foreground">
+              Show this QR code to another player so they can verify your task.
             </p>
             {qrDataUrl && (
-              <div className="flex justify-center">
-                <img src={qrDataUrl} alt="Verification QR code" className="w-48 h-48" />
+              <div className="mt-4 flex justify-center">
+                <img
+                  src={qrDataUrl}
+                  alt="Verification QR code"
+                  className="h-52 w-52"
+                />
               </div>
             )}
-            <p className="text-xs text-muted-foreground font-mono break-all text-center">
+            <p className="mt-3 break-all text-center text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
               {profileUrl}
             </p>
-            <div className="flex justify-center pt-1">
+            <div className="mt-3 flex justify-center">
               <Button
                 onClick={onCancel}
                 disabled={canceling}
                 variant="ghost"
                 size="sm"
-                className="text-xs text-muted-foreground/60 hover:text-muted-foreground"
               >
-                {canceling ? "Canceling..." : "Cancel Request"}
+                {canceling ? "Canceling…" : "Cancel request"}
               </Button>
             </div>
           </div>
@@ -680,22 +734,24 @@ function SelfReportPicker({
     : players;
 
   return (
-    <div className="rounded-lg bg-destructive/[0.04] border border-destructive/15 p-4 space-y-3">
-      <p className="text-sm text-destructive/80 font-medium">
-        Who caught you? <span className="text-muted-foreground/60 font-normal">(they&apos;ll get +3 pts, you&apos;ll get -1)</span>
+    <div className="space-y-3 border-l-2 border-destructive bg-destructive/5 px-4 py-4">
+      <p className="text-[14px] text-foreground">
+        <span className="font-medium text-destructive">Who caught you?</span>{" "}
+        <span className="text-muted-foreground">
+          (they get +3, you get −1)
+        </span>
       </p>
       <Input
         type="search"
-        placeholder={`Search ${players.length || ""} players by name...`}
+        placeholder={`Search ${players.length || ""} players by name…`}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         disabled={selfReporting}
         autoComplete="off"
-        className="h-10 bg-background/50 border-destructive/20"
       />
-      <div className="max-h-56 overflow-y-auto -mx-1 px-1">
+      <div className="max-h-56 overflow-y-auto">
         {filtered.length === 0 ? (
-          <p className="px-1 py-3 text-xs font-mono text-muted-foreground/60 text-center">
+          <p className="py-3 text-center text-sm text-muted-foreground">
             No players match &ldquo;{search}&rdquo;
           </p>
         ) : (
@@ -707,7 +763,6 @@ function SelfReportPicker({
                 disabled={selfReporting}
                 variant="outline"
                 size="sm"
-                className="text-xs border-destructive/20 hover:bg-destructive/10 hover:text-destructive"
               >
                 {p.name}
               </Button>
@@ -716,14 +771,9 @@ function SelfReportPicker({
         )}
       </div>
       {selfReporting && (
-        <p className="font-mono text-xs text-muted-foreground animate-pulse-glow">REPORTING...</p>
+        <p className="text-sm text-muted-foreground">Reporting…</p>
       )}
-      <Button
-        onClick={onCancel}
-        variant="ghost"
-        size="sm"
-        className="text-xs text-muted-foreground/60 hover:text-muted-foreground"
-      >
+      <Button onClick={onCancel} variant="ghost" size="sm">
         Cancel
       </Button>
     </div>
@@ -734,26 +784,30 @@ function FlagStatusBadge({ status }: { status: string }) {
   switch (status) {
     case "pending":
       return (
-        <span className="font-mono text-xs text-amber-400 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse-glow" />
-          PENDING
+        <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-foreground/70">
+          <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+          Pending
         </span>
       );
     case "cleared":
       return (
-        <span className="font-mono text-xs text-emerald-400 flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-          CLEARED
+        <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-success">
+          <span className="h-1.5 w-1.5 rounded-full bg-success" />
+          Cleared
         </span>
       );
     case "caught":
       return (
-        <span className="font-mono text-xs text-destructive flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-          CAUGHT
+        <span className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.16em] text-destructive">
+          <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+          Caught
         </span>
       );
     default:
-      return <span className="font-mono text-xs text-muted-foreground">{status}</span>;
+      return (
+        <span className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+          {status}
+        </span>
+      );
   }
 }

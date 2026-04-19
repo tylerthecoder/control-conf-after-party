@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Suspense } from "react";
 
 interface PlayerInfo {
   _id: string;
@@ -71,44 +70,36 @@ function PlayerContent({ id }: { id: string }) {
 
   if (loading) {
     return (
-      <main className="flex-1 flex items-center justify-center grid-bg">
-        <div className="font-mono text-sm text-muted-foreground animate-pulse-glow">
-          LOADING...
-        </div>
+      <main className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading…</p>
       </main>
     );
   }
 
   if (!player) {
     return (
-      <main className="flex-1 flex items-center justify-center grid-bg">
-        <p className="text-muted-foreground">Player not found</p>
+      <main className="flex flex-1 items-center justify-center">
+        <p className="text-sm text-muted-foreground">Player not found.</p>
       </main>
     );
   }
 
   if (loggedIn === false) {
     return (
-      <main className="flex-1 flex items-center justify-center p-4 grid-bg">
-        <div className="w-full max-w-sm space-y-5 animate-fade-in-up">
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-6 text-center space-y-4">
-            <div className="flex items-center justify-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse-glow" />
-              <h2 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">
-                Verification Request
-              </h2>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{player.name}</span>{" "}
-              needs someone to verify their task. Join the party first to confirm it.
+      <main className="flex flex-1 items-center justify-center px-4">
+        <div className="w-full max-w-sm space-y-6 animate-fade-in-up">
+          <div className="space-y-3 border border-border bg-card p-6 text-center">
+            <p className="text-[11px] uppercase tracking-[0.18em] text-foreground/70">
+              Verification request
             </p>
-            <Button
-              onClick={() => router.push("/")}
-              className="w-full bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20"
-              variant="outline"
-            >
-              Join the Party
-            </Button>
+            <p className="text-[15px] text-muted-foreground">
+              <span className="font-medium text-foreground">{player.name}</span>{" "}
+              needs someone to verify their task. Join the party first to
+              confirm it.
+            </p>
+            <div className="pt-2">
+              <Button onClick={() => router.push("/")}>Join the party</Button>
+            </div>
           </div>
         </div>
       </main>
@@ -123,58 +114,91 @@ function PlayerContent({ id }: { id: string }) {
   const showMainVerify = hasPendingMain && !isSelf && verified !== "main";
   const showSideVerify = hasPendingSide && !isSelf && verified !== "side";
 
-  const preferredType = verifyHint === "main" ? "main" : verifyHint === "side" ? "side" : null;
+  const preferredType =
+    verifyHint === "main" ? "main" : verifyHint === "side" ? "side" : null;
 
-  const verifyBlocks: { type: "main" | "side"; task: string; points: string; label: string }[] = [];
-  if (showMainVerify) verifyBlocks.push({ type: "main", task: player.mainTask!, points: "+1", label: "Main Task" });
-  if (showSideVerify) verifyBlocks.push({ type: "side", task: player.sideTask!, points: "+5", label: "Side Task" });
+  const verifyBlocks: {
+    type: "main" | "side";
+    task: string;
+    points: string;
+    label: string;
+  }[] = [];
+  if (showMainVerify)
+    verifyBlocks.push({
+      type: "main",
+      task: player.mainTask!,
+      points: "+1",
+      label: "Main task",
+    });
+  if (showSideVerify)
+    verifyBlocks.push({
+      type: "side",
+      task: player.sideTask!,
+      points: "+5",
+      label: "Side task",
+    });
   if (preferredType) {
-    verifyBlocks.sort((a, b) => (a.type === preferredType ? -1 : b.type === preferredType ? 1 : 0));
+    verifyBlocks.sort((a, b) =>
+      a.type === preferredType ? -1 : b.type === preferredType ? 1 : 0
+    );
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center p-4 grid-bg">
-      <div className="w-full max-w-sm space-y-5 animate-fade-in-up">
+    <main className="flex flex-1 items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md space-y-6 animate-fade-in-up">
+        {/* Header */}
+        <header className="space-y-1 text-center">
+          <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+            Verifying
+          </p>
+          <h1 className="font-serif text-3xl tracking-tight text-foreground">
+            {player.name}
+          </h1>
+        </header>
+
         {/* Verification blocks */}
         {verifyBlocks.map((block) => (
-          <div key={block.type} className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] p-5 space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse-glow" />
-                <h2 className="font-mono text-xs tracking-wider text-amber-400/80 uppercase">
-                  {block.label} Verification
-                </h2>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                <span className="font-medium text-foreground">{player.name}</span>{" "}
-                claims to have completed this task. Did you witness it?
+          <section
+            key={block.type}
+            className="space-y-4 border border-border bg-card p-5"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-foreground/70">
+                {block.label} verification
               </p>
-              <div className="rounded-lg bg-background/50 border border-border/30 p-3">
-                <p className="font-mono text-xs text-muted-foreground/60 uppercase tracking-wider mb-1">
-                  Their task was <span className="text-emerald-400/50">({block.points})</span>
-                </p>
-                <p className="text-sm leading-relaxed">{block.task}</p>
-              </div>
+              <span className="font-mono text-[13px] tabular-nums text-success">
+                {block.points}
+              </span>
+            </div>
+            <p className="text-[14.5px] leading-relaxed text-muted-foreground">
+              <span className="font-medium text-foreground">
+                {player.name}
+              </span>{" "}
+              claims to have completed this task. Did you witness it?
+            </p>
+            <div className="border-l-2 border-border bg-paper-soft px-4 py-3">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                Their task
+              </p>
+              <p className="mt-1 font-serif text-[17px] leading-snug text-foreground">
+                {block.task}
+              </p>
             </div>
             {verifyError && verifying === null && (
-              <p className="text-sm text-destructive font-mono">{verifyError}</p>
+              <p className="text-sm text-destructive">{verifyError}</p>
             )}
             <Button
               onClick={() => handleVerify(block.type)}
               disabled={verifying !== null}
-              className="w-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
-              variant="outline"
+              className="w-full"
             >
-              {verifying === block.type ? (
-                <span className="font-mono text-xs">VERIFYING...</span>
-              ) : (
-                "I confirm they did this"
-              )}
+              {verifying === block.type
+                ? "Verifying…"
+                : "I confirm they did this"}
             </Button>
-          </div>
+          </section>
         ))}
 
-        {/* Verified confirmations */}
         {verified === "main" && (
           <VerifiedBanner name={player.name} points={1} />
         )}
@@ -182,32 +206,30 @@ function PlayerContent({ id }: { id: string }) {
           <VerifiedBanner name={player.name} points={5} />
         )}
 
-        {/* Self-viewing */}
         {isSelf && hasSomethingPending && (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-5 text-center space-y-2">
-            <span className="font-mono text-xs text-amber-400 flex items-center justify-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse-glow" />
-              AWAITING VERIFICATION
+          <section className="space-y-2 border border-border bg-card p-5 text-center">
+            <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-foreground/70">
+              <span className="h-1.5 w-1.5 rounded-full bg-warning" />
+              Awaiting verification
             </span>
             <p className="text-sm text-muted-foreground">
               Someone else needs to scan this page to verify your task.
             </p>
-          </div>
+          </section>
         )}
 
-        {/* No pending verification */}
         {!hasSomethingPending && !verified && (
-          <div className="rounded-xl border border-border/30 bg-card/30 p-5 text-center space-y-2">
+          <section className="border border-border bg-card p-5 text-center">
             <p className="text-sm text-muted-foreground">
-              {player.name} doesn&apos;t have a task pending verification right now.
+              {player.name} doesn&apos;t have a task pending verification right
+              now.
             </p>
-          </div>
+          </section>
         )}
 
-        {/* Navigation */}
-        <div className="text-center">
+        <div className="flex justify-center">
           <Button variant="outline" onClick={() => router.push("/play")}>
-            Back to Dashboard
+            Back to dashboard
           </Button>
         </div>
       </div>
@@ -217,15 +239,18 @@ function PlayerContent({ id }: { id: string }) {
 
 function VerifiedBanner({ name, points }: { name: string; points: number }) {
   return (
-    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.05] p-5 text-center space-y-2">
-      <span className="font-mono text-xs text-emerald-400 flex items-center justify-center gap-1.5">
-        <span className="w-2 h-2 rounded-full bg-emerald-400" />
-        VERIFIED
+    <section className="space-y-2 border-l-2 border-success bg-success/5 px-5 py-4 text-center">
+      <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-success">
+        <span className="h-1.5 w-1.5 rounded-full bg-success" />
+        Verified
       </span>
       <p className="text-sm text-muted-foreground">
-        {name}&apos;s task has been confirmed. They earned +{points} point{points !== 1 ? "s" : ""}.
+        <span className="font-medium text-foreground">{name}</span>&apos;s task
+        has been confirmed. They earned{" "}
+        <span className="font-medium text-success">+{points}</span> point
+        {points !== 1 ? "s" : ""}.
       </p>
-    </div>
+    </section>
   );
 }
 
@@ -238,10 +263,8 @@ export default function PlayerPage({
   return (
     <Suspense
       fallback={
-        <main className="flex-1 flex items-center justify-center grid-bg">
-          <div className="font-mono text-sm text-muted-foreground animate-pulse-glow">
-            LOADING...
-          </div>
+        <main className="flex flex-1 items-center justify-center">
+          <p className="text-sm text-muted-foreground">Loading…</p>
         </main>
       }
     >

@@ -61,7 +61,8 @@ export default function AdminPage() {
   }
 
   async function handleReset() {
-    if (!confirm("This will delete ALL players and flags. Are you sure?")) return;
+    if (!confirm("This will delete ALL players and flags. Are you sure?"))
+      return;
     setLoading(true);
     await fetch("/api/admin/reset", { method: "POST" });
     await fetchData();
@@ -70,150 +71,175 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <main className="flex-1 flex items-center justify-center p-4 grid-bg">
-        <div className="w-full max-w-sm animate-fade-in-up">
-          <div className="text-center mb-6">
-            <h1 className="font-mono text-xs tracking-[0.3em] text-muted-foreground uppercase mb-2">
-              Operator Access
+      <main className="flex flex-1 items-center justify-center px-4 py-16">
+        <div className="w-full max-w-sm space-y-6 animate-fade-in-up">
+          <header className="space-y-2 text-center">
+            <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              Operator access
+            </p>
+            <h1 className="font-serif text-3xl tracking-tight text-foreground">
+              Admin panel.
             </h1>
-            <p className="text-2xl font-bold">Admin Panel</p>
-          </div>
-
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6">
-            <form onSubmit={handleLogin} className="space-y-4">
+          </header>
+          <form
+            onSubmit={handleLogin}
+            className="space-y-4 border border-border bg-card p-6"
+          >
+            <div className="space-y-2">
+              <label className="block text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Password
+              </label>
               <Input
                 type="password"
                 placeholder="Enter admin password"
                 value={secret}
                 onChange={(e) => setSecret(e.target.value)}
                 autoFocus
-                className="h-11 bg-background/50 border-border/50"
               />
-              {error && (
-                <p className="text-sm text-destructive font-mono">{error}</p>
-              )}
-              <Button type="submit" className="w-full h-11">
-                Authenticate
-              </Button>
-            </form>
-          </div>
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full">
+              Authenticate
+            </Button>
+          </form>
         </div>
       </main>
     );
   }
 
+  const flagsFiled = players.reduce(
+    (sum, p) => sum + (3 - p.flagsRemaining),
+    0
+  );
+
   return (
-    <main className="flex-1 grid-bg">
-      <div className="max-w-4xl mx-auto w-full p-4 sm:p-6 space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between pt-2">
+    <main className="flex-1">
+      <div className="mx-auto w-full max-w-5xl space-y-10 px-5 py-12 sm:px-8 sm:py-16">
+        <header className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-              Operator Panel
+            <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+              Operator panel
             </p>
-            <h1 className="text-2xl font-bold mt-1">PartyArena</h1>
+            <h1 className="mt-2 font-serif text-4xl tracking-tight text-foreground">
+              The Eval.
+            </h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {gameActive ? (
-              <span className="font-mono text-xs text-emerald-400 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-glow" />
-                ACTIVE
+              <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-success">
+                <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                Active
               </span>
             ) : (
-              <span className="font-mono text-xs text-muted-foreground flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-muted-foreground/40" />
-                INACTIVE
+              <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                Inactive
               </span>
             )}
           </div>
-        </div>
+        </header>
+
+        <div className="hr-rule" />
 
         {/* Controls */}
-        <div className="flex flex-wrap gap-3">
+        <section className="flex flex-wrap gap-2">
           {!gameActive && (
-            <Button
-              onClick={handleStart}
-              disabled={loading}
-              className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
-              variant="outline"
-            >
-              Start the Eval
+            <Button onClick={handleStart} disabled={loading}>
+              Start the eval
             </Button>
           )}
           <Button
             onClick={handleReset}
             disabled={loading}
             variant="outline"
-            className="border-destructive/30 text-destructive hover:bg-destructive/10"
+            className="border-destructive/40 text-destructive hover:border-destructive"
           >
-            Reset Everything
+            Reset everything
           </Button>
-          <Button onClick={fetchData} variant="outline" className="font-mono text-xs">
+          <Button onClick={fetchData} variant="ghost">
             Refresh
           </Button>
-        </div>
+        </section>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center">
-            <p className="font-mono text-3xl font-bold tabular-nums">{players.length}</p>
-            <p className="font-mono text-xs text-muted-foreground uppercase mt-1">Participants</p>
-          </div>
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4 text-center">
-            <p className="font-mono text-3xl font-bold tabular-nums text-amber-400">
-              {players.reduce((sum, p) => sum + (3 - p.flagsRemaining), 0)}
-            </p>
-            <p className="font-mono text-xs text-amber-400/60 uppercase mt-1">Flags Filed</p>
-          </div>
-        </div>
+        <section className="grid grid-cols-2 gap-px overflow-hidden border border-border bg-border">
+          <Stat label="Participants" value={players.length} />
+          <Stat label="Flags filed" value={flagsFiled} accent />
+        </section>
 
-        {/* Participants Table */}
-        <section className="rounded-xl border border-border/50 bg-card/50 overflow-hidden">
-          <div className="px-5 py-3 border-b border-border/30 flex items-center justify-between">
-            <h2 className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
+        {/* Participants */}
+        <section className="space-y-4">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-serif text-2xl tracking-tight text-foreground">
               Participants
             </h2>
-            <span className="font-mono text-xs text-muted-foreground/60">{players.length}</span>
+            <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+              {players.length}
+            </span>
           </div>
-          <div className="divide-y divide-border/30">
-            {players.length === 0 ? (
-              <p className="px-5 py-6 text-sm text-muted-foreground text-center">
-                No participants yet
-              </p>
-            ) : (
-              players.map((p) => (
-                <div key={p._id} className="flex items-center justify-between px-5 py-3">
+
+          {players.length === 0 ? (
+            <p className="border-t border-b border-border/70 py-10 text-center text-sm text-muted-foreground">
+              No participants yet.
+            </p>
+          ) : (
+            <ul className="divide-y divide-border/70 border-t border-b border-border/70">
+              {players.map((p) => (
+                <li
+                  key={p._id}
+                  className="flex items-center justify-between gap-4 py-3"
+                >
                   <div className="flex items-center gap-3">
-                    <span className="font-medium text-sm">{p.name}</span>
+                    <span className="text-[15px] font-medium text-foreground">
+                      {p.name}
+                    </span>
                     {p.sideTaskCompleted && (
-                      <Badge
-                        variant="outline"
-                        className="text-xs border-emerald-500/30 text-emerald-400"
-                      >
-                        Task Done
-                      </Badge>
+                      <Badge variant="success">Task done</Badge>
                     )}
                     {p.sideTaskPendingVerification && (
-                      <Badge
-                        variant="outline"
-                        className="text-xs border-amber-500/30 text-amber-400"
-                      >
-                        Pending
-                      </Badge>
+                      <Badge variant="warning">Pending</Badge>
                     )}
-                    <span className="font-mono text-xs text-amber-400/40">
+                    <span className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
                       {p.flagsRemaining} flags left
                     </span>
                   </div>
-                  <span className="font-mono text-sm tabular-nums text-muted-foreground">
-                    {p.score} pts
+                  <span className="font-serif text-lg tabular-nums text-foreground">
+                    {p.score}{" "}
+                    <span className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                      pts
+                    </span>
                   </span>
-                </div>
-              ))
-            )}
-          </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
       </div>
     </main>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: number;
+  accent?: boolean;
+}) {
+  return (
+    <div className="bg-card p-6 text-center">
+      <p
+        className={`font-serif text-4xl tabular-nums ${
+          accent ? "text-brand" : "text-foreground"
+        }`}
+      >
+        {value}
+      </p>
+      <p className="mt-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </p>
+    </div>
   );
 }
