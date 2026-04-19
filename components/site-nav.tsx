@@ -18,10 +18,10 @@ export function SiteNav() {
         <Link
           href="/"
           className="group flex items-baseline gap-2"
-          aria-label="The Eval — home"
+          aria-label="PartyArena — home"
         >
           <span className="font-serif text-xl tracking-tight text-foreground transition-colors group-hover:text-brand">
-            The&nbsp;Eval
+            PartyArena
           </span>
           <span className="hidden text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:inline">
             ControlConf 2026

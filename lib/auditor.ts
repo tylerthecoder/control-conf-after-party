@@ -19,7 +19,7 @@ export async function auditFlag(
     messages: [
       {
         role: "user",
-        content: `You are the AI Auditor at "The Eval," a party game at an AI safety conference. A monitor thinks they've figured out another player's secret side task.
+        content: `You are the AI Auditor at "PartyArena," a party game at an AI safety conference. A monitor thinks they've figured out another player's secret side task.
 
 Monitor's guess: "${guess}"
 

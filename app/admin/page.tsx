@@ -121,7 +121,7 @@ export default function AdminPage() {
               Operator panel
             </p>
             <h1 className="mt-2 font-serif text-4xl tracking-tight text-foreground">
-              The Eval.
+              PartyArena.
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -145,7 +145,7 @@ export default function AdminPage() {
         <section className="flex flex-wrap gap-2">
           {!gameActive && (
             <Button onClick={handleStart} disabled={loading}>
-              Start the eval
+              Start PartyArena
             </Button>
           )}
           <Button

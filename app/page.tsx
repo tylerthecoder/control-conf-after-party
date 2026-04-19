@@ -76,7 +76,7 @@ export default function Home() {
               ControlConf 2026 · After Party
             </p>
             <h1 className="font-serif text-5xl leading-[1.05] tracking-tight text-foreground sm:text-6xl">
-              The Eval.
+              PartyArena.
             </h1>
             <p className="max-w-xl text-[17px] leading-relaxed text-muted-foreground">
               A live evaluation game. You&apos;re given a secret task. Complete
@@ -133,7 +133,7 @@ export default function Home() {
                 Standby
               </div>
               <p className="text-base text-muted-foreground">
-                The eval hasn&apos;t started yet. Awaiting the operator.
+                PartyArena hasn&apos;t started yet. Awaiting the operator.
               </p>
               <Link
                 href="/rules"

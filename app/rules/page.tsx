@@ -11,7 +11,7 @@ export default function RulesPage() {
             How to play
           </p>
           <h1 className="font-serif text-4xl tracking-tight text-foreground sm:text-5xl">
-            Rules of the eval.
+            Rules of PartyArena.
           </h1>
           <p className="text-[17px] leading-relaxed text-muted-foreground">
             Every player is given a secret task. Every player is also a monitor.
