@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "The Eval — Control Conf After Party",
+  title: "PartyArena — Control Conf After Party",
   description: "A live AI control evaluation party game",
 };
 

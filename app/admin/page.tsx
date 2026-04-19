@@ -111,7 +111,7 @@ export default function AdminPage() {
             <p className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
               Operator Panel
             </p>
-            <h1 className="text-2xl font-bold mt-1">The Eval</h1>
+            <h1 className="text-2xl font-bold mt-1">PartyArena</h1>
           </div>
           <div className="flex items-center gap-3">
             {gameActive ? (

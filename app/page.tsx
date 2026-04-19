@@ -78,7 +78,7 @@ export default function Home() {
               ControlConf 2026 After Party
             </p>
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight">
-              The Eval
+              PartyArena
             </h1>
             <div className="mt-3 h-px bg-gradient-to-r from-transparent via-muted-foreground/30 to-transparent" />
           </div>

@@ -36,7 +36,6 @@ interface Activity {
 
 export default function LeaderboardPage() {
   const [all, setAll] = useState<LeaderboardPlayer[]>([]);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [feedUpdated, setFeedUpdated] = useState<Date | null>(null);
 
@@ -45,7 +44,6 @@ export default function LeaderboardPage() {
       const res = await fetch("/api/leaderboard");
       const data = await res.json();
       setAll(data.all);
-      setLastUpdated(new Date());
     } catch {
       /* ignore */
     }
@@ -64,13 +62,13 @@ export default function LeaderboardPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000);
+    const interval = setInterval(fetchData, 10000);
     return () => clearInterval(interval);
   }, [fetchData]);
 
   useEffect(() => {
     fetchFeed();
-    const interval = setInterval(fetchFeed, 30000);
+    const interval = setInterval(fetchFeed, 10000);
     return () => clearInterval(interval);
   }, [fetchFeed]);
 
@@ -95,7 +93,7 @@ export default function LeaderboardPage() {
             ControlConf 2026 After Party
           </p>
           <h1 className="text-6xl sm:text-7xl font-bold tracking-tighter">
-            THE EVAL
+            PARTYARENA
           </h1>
           <div className="flex items-center justify-center gap-3 text-zinc-500">
             <div className="h-px w-16 bg-gradient-to-r from-transparent to-zinc-700" />
@@ -104,11 +102,6 @@ export default function LeaderboardPage() {
             </span>
             <div className="h-px w-16 bg-gradient-to-l from-transparent to-zinc-700" />
           </div>
-          {lastUpdated && (
-            <p className="font-mono text-[10px] text-zinc-700 tracking-wider">
-              LAST SYNC {lastUpdated.toLocaleTimeString().toUpperCase()}
-            </p>
-          )}
         </header>
 
         {/* Two-column layout: rankings | live feed */}
@@ -279,9 +272,6 @@ export default function LeaderboardPage() {
               )}
             </div>
 
-            <p className="font-mono text-[10px] text-zinc-700 text-center tracking-wider">
-              POLLING EVERY 30s — LAST 20 EVENTS
-            </p>
           </aside>
         </div>
       </div>
