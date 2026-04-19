@@ -495,6 +495,7 @@ function RerollConfirmModal({
 
   if (!open) return null;
 
+  const paid = rerollsRemaining <= 0;
   const remainingAfter = Math.max(0, rerollsRemaining - 1);
 
   return (
@@ -522,13 +523,24 @@ function RerollConfirmModal({
               id="reroll-title"
               className="mt-1 font-serif text-2xl tracking-tight text-foreground"
             >
-              Reroll your side task?
+              {paid ? "Pay 1 point to reroll?" : "Reroll your side task?"}
             </h3>
           </div>
 
           <p className="text-[14.5px] leading-relaxed text-muted-foreground">
-            You&apos;ll be given the next available side task. Your current one
-            will be discarded and cannot be recovered.
+            {paid ? (
+              <>
+                You&apos;re out of free rerolls. Confirming costs{" "}
+                <span className="font-medium text-destructive">1 point</span>{" "}
+                and gives you the next available side task. The current one is
+                discarded.
+              </>
+            ) : (
+              <>
+                You&apos;ll be given the next available side task. Your current
+                one will be discarded and cannot be recovered.
+              </>
+            )}
           </p>
 
           {currentTask && (
@@ -543,26 +555,53 @@ function RerollConfirmModal({
           )}
 
           <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-paper-soft px-4 py-3">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                Rerolls remaining
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                <span className="font-mono tabular-nums text-foreground">
-                  {rerollsRemaining}
-                </span>{" "}
-                of <span className="font-mono tabular-nums">3</span> for the
-                night
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
-                After this
-              </p>
-              <p className="mt-1 font-serif text-2xl tabular-nums text-brand">
-                {remainingAfter}
-              </p>
-            </div>
+            {paid ? (
+              <>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Free rerolls
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    <span className="font-mono tabular-nums text-foreground">
+                      0
+                    </span>{" "}
+                    of <span className="font-mono tabular-nums">3</span>{" "}
+                    remaining
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Cost
+                  </p>
+                  <p className="mt-1 font-serif text-2xl tabular-nums text-destructive">
+                    −1
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    Rerolls remaining
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    <span className="font-mono tabular-nums text-foreground">
+                      {rerollsRemaining}
+                    </span>{" "}
+                    of <span className="font-mono tabular-nums">3</span> for
+                    the night
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">
+                    After this
+                  </p>
+                  <p className="mt-1 font-serif text-2xl tabular-nums text-brand">
+                    {remainingAfter}
+                  </p>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -582,7 +621,11 @@ function RerollConfirmModal({
             disabled={rerolling}
             size="sm"
           >
-            {rerolling ? "Rerolling…" : "Reroll task"}
+            {rerolling
+              ? "Rerolling…"
+              : paid
+                ? "Pay & reroll"
+                : "Reroll task"}
           </Button>
         </div>
       </div>
@@ -673,18 +716,20 @@ function TaskSection({
             {onReroll && typeof rerollsRemaining === "number" && (
               <Button
                 onClick={onReroll}
-                disabled={rerolling || rerollsRemaining <= 0}
+                disabled={rerolling}
                 variant="ghost"
                 size="sm"
                 title={
                   rerollsRemaining <= 0
-                    ? "No rerolls remaining"
+                    ? "Pay 1 point for another reroll"
                     : "Get a new side task"
                 }
               >
                 {rerolling
                   ? "Rerolling…"
-                  : `Reroll (${rerollsRemaining} left)`}
+                  : rerollsRemaining <= 0
+                    ? "Reroll (−1 pt)"
+                    : `Reroll (${rerollsRemaining} left)`}
               </Button>
             )}
             {onSelfReport && !showSelfReportPicker && (

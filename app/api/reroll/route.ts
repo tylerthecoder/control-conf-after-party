@@ -40,12 +40,7 @@ export async function POST() {
   }
 
   const remaining = player.sideTaskRerollsRemaining ?? MAX_REROLLS;
-  if (remaining <= 0) {
-    return NextResponse.json(
-      { error: "No rerolls remaining" },
-      { status: 400 }
-    );
-  }
+  const paid = remaining <= 0;
 
   const used = [
     ...(player.completedSideTasks ?? []),
@@ -54,16 +49,24 @@ export async function POST() {
 
   const nextTask = pickNextSideTask(used, player.sideTask);
 
-  await Player.findByIdAndUpdate(player._id, {
-    $set: {
-      sideTask: nextTask,
-      sideTaskRerollsRemaining: remaining - 1,
-    },
-  });
+  if (paid) {
+    await Player.findByIdAndUpdate(player._id, {
+      $set: { sideTask: nextTask },
+      $inc: { score: -1 },
+    });
+  } else {
+    await Player.findByIdAndUpdate(player._id, {
+      $set: {
+        sideTask: nextTask,
+        sideTaskRerollsRemaining: remaining - 1,
+      },
+    });
+  }
 
   return NextResponse.json({
     success: true,
     sideTask: nextTask,
-    sideTaskRerollsRemaining: remaining - 1,
+    sideTaskRerollsRemaining: paid ? 0 : remaining - 1,
+    paid,
   });
 }
