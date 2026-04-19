@@ -7,7 +7,7 @@ import { Flag } from "@/lib/models/Flag";
 import { Activity } from "@/lib/models/Activity";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { auditFlag } from "@/lib/auditor";
-import { sideTasks } from "@/lib/tasks";
+import { pickNextSideTask } from "@/lib/tasks";
 
 export async function POST(req: NextRequest) {
   const session = await getIronSession<SessionData>(
@@ -62,9 +62,12 @@ export async function POST(req: NextRequest) {
 
   if (result.verdict === "caught") {
     const priorCompleted: string[] = target.completedSideTasks ?? [];
-    const usedTasks = new Set([...priorCompleted, target.sideTask]);
-    const nextTask =
-      sideTasks.find((t) => !usedTasks.has(t)) ?? sideTasks[0];
+    const nextTask = pickNextSideTask(
+      [...priorCompleted, target.sideTask].filter(
+        (t): t is string => Boolean(t)
+      ),
+      target.sideTask
+    );
 
     await Player.findByIdAndUpdate(target._id, {
       $set: {

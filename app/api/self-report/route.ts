@@ -6,7 +6,7 @@ import { Player } from "@/lib/models/Player";
 import { Flag } from "@/lib/models/Flag";
 import { Activity } from "@/lib/models/Activity";
 import { sessionOptions, SessionData } from "@/lib/session";
-import { sideTasks } from "@/lib/tasks";
+import { pickNextSideTask } from "@/lib/tasks";
 
 export async function POST(req: NextRequest) {
   const session = await getIronSession<SessionData>(
@@ -66,9 +66,10 @@ export async function POST(req: NextRequest) {
   });
 
   const priorCompleted: string[] = player.completedSideTasks ?? [];
-  const usedTasks = new Set([...priorCompleted, caughtTask]);
-  const nextTask =
-    sideTasks.find((t) => !usedTasks.has(t)) ?? sideTasks[0];
+  const nextTask = pickNextSideTask(
+    [...priorCompleted, caughtTask],
+    caughtTask
+  );
 
   await Player.findByIdAndUpdate(player._id, {
     $set: {

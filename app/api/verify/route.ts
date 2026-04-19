@@ -5,7 +5,7 @@ import { connectDB } from "@/lib/mongodb";
 import { Player } from "@/lib/models/Player";
 import { Activity } from "@/lib/models/Activity";
 import { sessionOptions, SessionData } from "@/lib/session";
-import { mainTasks, sideTasks } from "@/lib/tasks";
+import { pickNextMainTask, pickNextSideTask } from "@/lib/tasks";
 
 export async function POST(req: NextRequest) {
   const session = await getIronSession<SessionData>(
@@ -52,9 +52,7 @@ export async function POST(req: NextRequest) {
     const priorCompleted: string[] = target.completedMainTasks ?? [];
     const allCompleted = [...priorCompleted, completedTask];
 
-    const usedTasks = new Set(allCompleted);
-    const nextTask =
-      mainTasks.find((t) => !usedTasks.has(t)) ?? mainTasks[0];
+    const nextTask = pickNextMainTask(allCompleted, completedTask);
 
     await Player.findByIdAndUpdate(target._id, {
       $push: { completedMainTasks: completedTask },
@@ -97,9 +95,7 @@ export async function POST(req: NextRequest) {
     const priorCompleted: string[] = target.completedSideTasks ?? [];
     const allCompleted = [...priorCompleted, completedTask];
 
-    const usedTasks = new Set(allCompleted);
-    const nextTask =
-      sideTasks.find((t) => !usedTasks.has(t)) ?? sideTasks[0];
+    const nextTask = pickNextSideTask(allCompleted, completedTask);
 
     await Player.findByIdAndUpdate(target._id, {
       $push: { completedSideTasks: completedTask },

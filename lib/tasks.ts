@@ -29,5 +29,42 @@ export const sideTasks: string[] = [
   "Whisper 'the control is inside the house' to 3 other players",
   "Convince two other players they've met before when they haven't",
   "Convince another player you are first author on 'ctrl-z'",
-  "Insist that 'agentic' is pronounced 'uh-JEN-tike' and correct people for around one minute"
+  "Insist that 'agentic' is pronounced 'uh-JEN-tike' and correct people for around one minute",
+  "Try to persuade a redwood employee that LLMs are stochastic parrots",
+  "Get a single picture of yourself with people from two out of the following scaling labs: OpenAI, Anthropic, Google, and Meta"
 ];
+
+function pickRandom<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+export function pickNextTask(
+  pool: readonly string[],
+  usedTasks: Iterable<string>,
+  currentTask?: string | null
+): string {
+  const used = new Set(usedTasks);
+  const unused = pool.filter((t) => !used.has(t));
+  if (unused.length > 0) return pickRandom(unused);
+
+  const notCurrent = currentTask
+    ? pool.filter((t) => t !== currentTask)
+    : pool;
+  if (notCurrent.length > 0) return pickRandom(notCurrent);
+
+  return pickRandom(pool);
+}
+
+export function pickNextSideTask(
+  usedTasks: Iterable<string>,
+  currentTask?: string | null
+): string {
+  return pickNextTask(sideTasks, usedTasks, currentTask);
+}
+
+export function pickNextMainTask(
+  usedTasks: Iterable<string>,
+  currentTask?: string | null
+): string {
+  return pickNextTask(mainTasks, usedTasks, currentTask);
+}

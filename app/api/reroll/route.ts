@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
 import { Player } from "@/lib/models/Player";
 import { sessionOptions, SessionData } from "@/lib/session";
-import { sideTasks } from "@/lib/tasks";
+import { pickNextSideTask } from "@/lib/tasks";
 
 const MAX_REROLLS = 3;
 
@@ -47,20 +47,12 @@ export async function POST() {
     );
   }
 
-  const used = new Set<string>([
+  const used = [
     ...(player.completedSideTasks ?? []),
     ...(player.sideTask ? [player.sideTask] : []),
-  ]);
+  ];
 
-  const unused = sideTasks.filter((t) => !used.has(t));
-  const fallback = sideTasks.filter((t) => t !== player.sideTask);
-  const pool =
-    unused.length > 0
-      ? unused
-      : fallback.length > 0
-      ? fallback
-      : sideTasks;
-  const nextTask = pool[Math.floor(Math.random() * pool.length)];
+  const nextTask = pickNextSideTask(used, player.sideTask);
 
   await Player.findByIdAndUpdate(player._id, {
     $set: {
