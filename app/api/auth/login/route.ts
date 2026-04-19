@@ -50,8 +50,9 @@ export async function POST(req: NextRequest) {
         sideTask: { $ne: null },
       }).distinct("sideTask");
       const assignedSet = new Set(assignedSideTasks);
-      const sideTask =
-        sideTasks.find((t) => !assignedSet.has(t)) ?? sideTasks[0];
+      const unassigned = sideTasks.filter((t) => !assignedSet.has(t));
+      const pool = unassigned.length > 0 ? unassigned : sideTasks;
+      const sideTask = pool[Math.floor(Math.random() * pool.length)];
 
       player = await Player.create({
         name: trimmedName,

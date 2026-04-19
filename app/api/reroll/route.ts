@@ -52,10 +52,15 @@ export async function POST() {
     ...(player.sideTask ? [player.sideTask] : []),
   ]);
 
-  const nextTask =
-    sideTasks.find((t) => !used.has(t)) ??
-    sideTasks.find((t) => t !== player.sideTask) ??
-    sideTasks[0];
+  const unused = sideTasks.filter((t) => !used.has(t));
+  const fallback = sideTasks.filter((t) => t !== player.sideTask);
+  const pool =
+    unused.length > 0
+      ? unused
+      : fallback.length > 0
+      ? fallback
+      : sideTasks;
+  const nextTask = pool[Math.floor(Math.random() * pool.length)];
 
   await Player.findByIdAndUpdate(player._id, {
     $set: {
