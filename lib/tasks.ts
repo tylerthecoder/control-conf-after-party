@@ -38,7 +38,8 @@ export const sideTasks: string[] = [
   "Sing 'let it go' from Frozen to another player",
   "Get someone to play tik tac toe with you on a 7 by 3 board",
   "Convince someone to give you their jacket",
-  "Get Tyler Tracy / Cody Rushing / Parv Mahajan to tell you 'I love you'"
+  "Get Tyler Tracy / Cody Rushing / Parv Mahajan to tell you 'I love you'",
+  "Convince someone that your side task is to get on the roof and then have the person you convinced be concerend enough to tell an organizer that is a bad side tasks"
 ];
 
 function pickRandom<T>(arr: readonly T[]): T {
