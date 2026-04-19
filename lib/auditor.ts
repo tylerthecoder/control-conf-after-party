@@ -46,15 +46,26 @@ Respond with ONLY valid JSON, no other text: { "verdict": "caught" or "cleared",
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
 
+  const normalizeVerdict = (raw: unknown): "caught" | "cleared" => {
+    const v = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+    if (v.includes("caught")) return "caught";
+    if (v.includes("cleared")) return "cleared";
+    return "cleared";
+  };
+
   try {
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text);
     return {
-      verdict: parsed.verdict === "caught" ? "caught" : "cleared",
+      verdict: normalizeVerdict(parsed.verdict),
       reason: parsed.reason || "The auditor has spoken.",
     };
   } catch {
-    const isCaught = text.toLowerCase().includes("caught");
+    const lower = text.toLowerCase();
+    const isCaught =
+      lower.includes('"caught"') ||
+      lower.includes("verdict: caught") ||
+      (lower.includes("caught") && !lower.includes("cleared"));
     return {
       verdict: isCaught ? "caught" : "cleared",
       reason: isCaught
