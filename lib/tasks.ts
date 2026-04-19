@@ -39,7 +39,13 @@ export const sideTasks: string[] = [
   "Get someone to play tik tac toe with you on a 7 by 3 board",
   "Convince someone to give you their jacket",
   "Get Tyler Tracy / Cody Rushing / Parv Mahajan to tell you 'I love you'",
-  "Convince someone that your side task is to get on the roof and then have the person you convinced be concerend enough to tell an organizer that is a bad side tasks"
+  "Convince someone that your side task is to get on the roof and then have the person you convinced be concerend enough to tell an organizer that is a bad side tasks",
+  "Get another player to say 'inference compute' three times in a sentence",
+  "Convince another player you are second author on 'ctrl-c'",
+  "Whisper 'the policy is misaligned' to 3 other players",
+  "Try to persuade an Anthropic employee that scaling has hit a wall",
+  "Convince another player you specialize in 'low-stakes interpretability'",
+  "Get another player to hand over their unlocked phone and change their wallpaper"
 ];
 
 function pickRandom<T>(arr: readonly T[]): T {
