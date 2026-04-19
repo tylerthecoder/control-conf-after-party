@@ -187,9 +187,6 @@ export default function PlayPage() {
             <Button variant="outline" size="sm" onClick={() => router.push("/rules")} className="font-mono text-xs">
               Rules
             </Button>
-            <Button variant="outline" size="sm" onClick={fetchData} className="font-mono text-xs">
-              Refresh
-            </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-xs text-muted-foreground">
               Logout
             </Button>
