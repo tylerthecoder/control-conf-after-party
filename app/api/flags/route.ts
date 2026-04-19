@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
 import { Player } from "@/lib/models/Player";
 import { Flag } from "@/lib/models/Flag";
+import { Activity } from "@/lib/models/Activity";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { auditFlag } from "@/lib/auditor";
 import { sideTasks } from "@/lib/tasks";
@@ -84,6 +85,15 @@ export async function POST(req: NextRequest) {
     monitor.score -= 2;
     await monitor.save();
   }
+
+  await Activity.create({
+    type: result.verdict === "caught" ? "flag_caught" : "flag_cleared",
+    playerName: monitor.name,
+    targetName: target.name,
+    guess: guess.trim(),
+    reason: result.reason,
+    task: result.verdict === "caught" ? target.sideTask : null,
+  });
 
   return NextResponse.json({
     success: true,

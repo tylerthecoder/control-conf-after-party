@@ -3,6 +3,7 @@ import { getIronSession } from "iron-session";
 import { cookies } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
 import { Player } from "@/lib/models/Player";
+import { Activity } from "@/lib/models/Activity";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { mainTasks, sideTasks } from "@/lib/tasks";
 
@@ -67,6 +68,12 @@ export async function POST(req: NextRequest) {
       $inc: { score: 1 },
     });
 
+    await Activity.create({
+      type: "main_task_completed",
+      playerName: target.name,
+      task: completedTask,
+    });
+
     return NextResponse.json({
       success: true,
       taskType: "main",
@@ -109,6 +116,12 @@ export async function POST(req: NextRequest) {
         sideTaskFailed: false,
       },
       $inc: { score: 5 },
+    });
+
+    await Activity.create({
+      type: "side_task_completed",
+      playerName: target.name,
+      task: completedTask,
     });
 
     return NextResponse.json({

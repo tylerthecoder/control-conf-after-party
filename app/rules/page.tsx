@@ -33,6 +33,9 @@ export default function RulesPage() {
             <p>
               Complete a task, then ask another player to scan your QR code and confirm they witnessed it. You&apos;ll get a new task after each one.
             </p>
+            <p className="rounded-md border border-amber-500/20 bg-amber-500/[0.05] px-3 py-2 text-amber-200/90">
+              <span className="font-medium text-amber-300">Important:</span> all tasks must be done with <span className="text-foreground font-medium">other players</span> only — not venue staff, not random guests, not your friends who didn&apos;t sign up. If a task says &ldquo;another player&rdquo; or &ldquo;other players,&rdquo; it means people who are actually playing the game.
+            </p>
             <p>
               Everyone is also a <span className="text-amber-400 font-medium">monitor</span> — you can flag other players if you think they&apos;re doing something suspicious. An AI auditor will judge whether the flag is valid.
             </p>

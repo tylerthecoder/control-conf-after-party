@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { connectDB } from "@/lib/mongodb";
 import { Player } from "@/lib/models/Player";
 import { Flag } from "@/lib/models/Flag";
+import { Activity } from "@/lib/models/Activity";
 import { sessionOptions, SessionData } from "@/lib/session";
 import { sideTasks } from "@/lib/tasks";
 
@@ -84,6 +85,15 @@ export async function POST(req: NextRequest) {
 
   catcher.score += 3;
   await catcher.save();
+
+  await Activity.create({
+    type: "flag_caught",
+    playerName: catcher.name,
+    targetName: player.name,
+    guess: "(self-reported)",
+    reason: `${player.name} admitted that ${catcher.name} caught them.`,
+    task: caughtTask,
+  });
 
   return NextResponse.json({
     success: true,
