@@ -40,6 +40,7 @@ export default function PlayPage() {
   const [completingSide, setCompletingSide] = useState(false);
   const [cancelingSide, setCancelingSide] = useState(false);
   const [rerolling, setRerolling] = useState(false);
+  const [showRerollConfirm, setShowRerollConfirm] = useState(false);
   const [selfReporting, setSelfReporting] = useState(false);
   const [showSelfReportPicker, setShowSelfReportPicker] = useState(false);
   const [allPlayers, setAllPlayers] = useState<{ _id: string; name: string }[]>([]);
@@ -90,17 +91,18 @@ export default function PlayPage() {
     setCompletingSide(false);
   }
 
-  async function handleReroll() {
+  function handleReroll() {
     if (rerolling) return;
-    const remaining = player?.sideTaskRerollsRemaining ?? 0;
-    const ok = window.confirm(
-      `Reroll your side task? You'll get a new random one.\n\nYou have ${remaining} reroll${remaining === 1 ? "" : "s"} left (3 total for the night).`
-    );
-    if (!ok) return;
+    setShowRerollConfirm(true);
+  }
+
+  async function confirmReroll() {
+    if (rerolling) return;
     setRerolling(true);
     const res = await fetch("/api/reroll", { method: "POST" });
     if (res.ok) await fetchData();
     setRerolling(false);
+    setShowRerollConfirm(false);
   }
 
   async function handleCancelSideVerification() {
@@ -348,7 +350,165 @@ export default function PlayPage() {
           </section>
         )}
       </div>
+
+      <RerollConfirmModal
+        open={showRerollConfirm}
+        currentTask={player.sideTask}
+        rerollsRemaining={player.sideTaskRerollsRemaining ?? 0}
+        rerolling={rerolling}
+        onConfirm={confirmReroll}
+        onCancel={() => {
+          if (!rerolling) setShowRerollConfirm(false);
+        }}
+      />
     </main>
+  );
+}
+
+function RerollConfirmModal({
+  open,
+  currentTask,
+  rerollsRemaining,
+  rerolling,
+  onConfirm,
+  onCancel,
+}: {
+  open: boolean;
+  currentTask: string | null;
+  rerollsRemaining: number;
+  rerolling: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape" && !rerolling) onCancel();
+      if (e.key === "Enter" && !rerolling) onConfirm();
+    }
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open, rerolling, onCancel, onConfirm]);
+
+  if (!open) return null;
+
+  const remainingAfter = Math.max(0, rerollsRemaining - 1);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reroll-title"
+    >
+      <button
+        type="button"
+        aria-label="Close"
+        onClick={onCancel}
+        disabled={rerolling}
+        className="absolute inset-0 bg-background/70 backdrop-blur-sm animate-fade-in-up cursor-default"
+      />
+
+      <div className="relative w-full max-w-md rounded-xl border border-amber-500/30 bg-card shadow-2xl shadow-amber-500/10 overflow-hidden animate-fade-in-up">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+
+        <div className="px-6 pt-6 pb-4 space-y-4">
+          <div className="flex items-start gap-4">
+            <div className="shrink-0 w-12 h-12 rounded-lg border border-amber-500/30 bg-amber-500/10 flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-6 h-6 text-amber-400"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+                <circle cx="16" cy="8" r="1.2" fill="currentColor" />
+                <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+                <circle cx="8" cy="16" r="1.2" fill="currentColor" />
+                <circle cx="16" cy="16" r="1.2" fill="currentColor" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-mono text-[10px] tracking-[0.25em] text-amber-400/70 uppercase">
+                Confirm Action
+              </p>
+              <h3 id="reroll-title" className="text-xl font-semibold tracking-tight mt-0.5">
+                Reroll your side task?
+              </h3>
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            You&apos;ll get a brand new random side task. Your current one will be
+            discarded and cannot be recovered.
+          </p>
+
+          {currentTask && (
+            <div className="rounded-lg border border-border/50 bg-background/40 px-4 py-3">
+              <p className="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase mb-1.5">
+                Current task
+              </p>
+              <p className="text-sm leading-relaxed line-clamp-3">{currentTask}</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+            <div>
+              <p className="font-mono text-[10px] tracking-wider text-amber-400/70 uppercase">
+                Rerolls remaining
+              </p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                <span className="font-mono tabular-nums text-amber-300">
+                  {rerollsRemaining}
+                </span>{" "}
+                of <span className="font-mono tabular-nums">3</span> for the night
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-mono text-[10px] tracking-wider text-muted-foreground/60 uppercase">
+                After this
+              </p>
+              <p className="font-mono text-lg tabular-nums text-amber-200 mt-0.5">
+                {remainingAfter}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-6 py-4 border-t border-border/40 bg-background/30 flex items-center justify-end gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+            disabled={rerolling}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={onConfirm}
+            disabled={rerolling}
+            variant="outline"
+            size="sm"
+            className="border-amber-500/40 text-amber-300 hover:bg-amber-500/10 hover:text-amber-200 font-mono text-xs tracking-wide"
+          >
+            {rerolling ? "REROLLING..." : "REROLL TASK"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
