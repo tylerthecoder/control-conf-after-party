@@ -243,34 +243,6 @@ export default function LeaderboardPage() {
               </div>
             </div>
 
-            {/* Scoring legend */}
-            <div className="max-w-xs mx-auto rounded-xl border border-border/30 bg-white/[0.02] p-4 space-y-2.5">
-              <p className="font-mono text-[10px] text-zinc-600 tracking-wider uppercase text-center">
-                Scoring
-              </p>
-              <div className="space-y-1.5 text-xs text-zinc-500">
-                <div className="flex justify-between">
-                  <span>Side task (secret) verified</span>
-                  <span className="font-mono text-emerald-500/70">+5</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Main task verified</span>
-                  <span className="font-mono text-emerald-500/70">+1</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Correct flag (caught)</span>
-                  <span className="font-mono text-amber-500/70">+3</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Caught doing side task</span>
-                  <span className="font-mono text-red-500/70">-1</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>False flag (cleared)</span>
-                  <span className="font-mono text-red-500/70">-2</span>
-                </div>
-              </div>
-            </div>
           </div>
 
           {/* RIGHT: Live feed */}
