@@ -21,7 +21,6 @@ export const sideTasks: string[] = [
   "Re-explain the same thing to another player three times, each time in a slightly different way",
   "Explain a paper/blog post incorrectly to the player who wrote it and insist you are correct if they correct you",
   "Get another player to open https://pastebin.com/raw/BHNWfMqr",
-  "Convince another player that you went to a talk at ControlConf that didn't happen",
   "Start a slow clap and get at least 5 other players to join in",
   "Convince five other players to sing Happy Birthday to another player whose birthday isn't today",
   "Convince another player that p(doom) is exactly 0.37 and you have a proof",
@@ -45,7 +44,8 @@ export const sideTasks: string[] = [
   "Whisper 'the policy is misaligned' to 3 other players",
   "Try to persuade an Anthropic employee that scaling has hit a wall",
   "Convince another player you specialize in 'low-stakes interpretability'",
-  "Get another player to hand over their unlocked phone and change their wallpaper"
+  "Get another player to hand over their unlocked phone and change their wallpaper",
+  "Argue with Buck for at least a minute that redwood should pivot to interp"
 ];
 
 function pickRandom<T>(arr: readonly T[]): T {
