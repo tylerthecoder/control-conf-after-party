@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import QRCode from "qrcode";
+
+const POLL_INTERVAL_MS = 30_000;
 
 interface PlayerData {
   _id: string;
@@ -47,6 +50,7 @@ export default function PlayPage() {
     { _id: string; name: string }[]
   >([]);
   const [sideQr, setSideQr] = useState<string | null>(null);
+  const seenCaughtFlagIdsRef = useRef<Set<string> | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -59,6 +63,30 @@ export default function PlayPage() {
       setPlayer(data.player);
       setFlagsAgainstMe(data.flagsAgainstMe);
       setFlagsByMe(data.flagsByMe);
+
+      const caughtFlags: FlagData[] = (data.flagsAgainstMe ?? []).filter(
+        (f: FlagData) => f.status === "caught"
+      );
+
+      if (seenCaughtFlagIdsRef.current === null) {
+        seenCaughtFlagIdsRef.current = new Set(caughtFlags.map((f) => f._id));
+      } else {
+        const seen = seenCaughtFlagIdsRef.current;
+        for (const flag of caughtFlags) {
+          if (seen.has(flag._id)) continue;
+          seen.add(flag._id);
+          const catcher = flag.monitorId?.name ?? "Someone";
+          const description = flag.selfReport
+            ? "You confirmed it yourself."
+            : flag.guess
+              ? `Their guess: ${flag.guess}`
+              : undefined;
+          toast.error(`${catcher} caught you!`, {
+            description,
+            duration: 10_000,
+          });
+        }
+      }
     } catch {
       /* ignore */
     } finally {
@@ -68,6 +96,8 @@ export default function PlayPage() {
 
   useEffect(() => {
     fetchData();
+    const id = setInterval(fetchData, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
   }, [fetchData]);
 
   useEffect(() => {
