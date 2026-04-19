@@ -31,7 +31,7 @@ export const sideTasks: string[] = [
   "Convince another player you are first author on 'ctrl-z'",
   "Insist that 'agentic' is pronounced 'uh-JEN-tike' and correct people for around one minute",
   "Try to persuade a redwood employee that LLMs are stochastic parrots",
-  "Get a single picture of yourself with people from two out of the following scaling labs: OpenAI, Anthropic, Google, and Meta",
+  "Get a selfie of yourself with people from two out of the following scaling labs: OpenAI, Anthropic, Google, and Meta",
   "Sell someone a control conf hat for a $1 (or an item of equivalent value)",
   "Get Aryan / Cody / Tyler / Parv to give you carrer advice",
   "Bark / Meow in a conversation with another player at least 3 times",
