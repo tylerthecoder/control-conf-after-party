@@ -53,7 +53,7 @@ export default function RulesPage() {
         <Section title="Scoring">
           <ul className="-mt-2 divide-y divide-border/70">
             <ScoreRow tone="positive" points="+5" label="Side task verified by another player" />
-            <ScoreRow tone="positive" points="+3" label="You correctly flag someone (they get caught)" />
+            <ScoreRow tone="positive" points="+7" label="You correctly flag someone (they get caught)" />
             <ScoreRow tone="negative" points="−1" label="You get caught doing your side task" />
             <ScoreRow tone="negative" points="−2" label="You file a false flag (target is cleared)" />
           </ul>
@@ -83,7 +83,7 @@ export default function RulesPage() {
             <span className="font-medium text-foreground">AI auditor</span>{" "}
             instantly compares your guess to their real task and delivers a
             verdict. If you&apos;re right, you get{" "}
-            <span className="font-medium text-success">+3</span> and they get{" "}
+            <span className="font-medium text-success">+7</span> and they get{" "}
             <span className="font-medium text-destructive">−1</span> plus a new
             task.
           </p>
@@ -91,7 +91,7 @@ export default function RulesPage() {
             Players can also{" "}
             <span className="font-medium text-foreground">self-report</span>{" "}
             from their dashboard if someone catches them — they pick who caught
-            them, and that person gets the +3 points.
+            them, and that person gets the +7 points.
           </p>
           <p>
             Choose wisely — wrong guesses cost you{" "}

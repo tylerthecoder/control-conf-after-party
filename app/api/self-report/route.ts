@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     $inc: { score: -1 },
   });
 
-  catcher.score += 3;
+  catcher.score += 7;
   await catcher.save();
 
   await Activity.create({

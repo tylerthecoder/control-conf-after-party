@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
       $inc: { score: -1 },
     });
 
-    monitor.score += 3;
+    monitor.score += 7;
     await monitor.save();
   } else {
     monitor.score -= 2;

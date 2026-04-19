@@ -274,7 +274,7 @@ export default function PlayPage() {
         <Section title="Flag another player" subtitle="Catch a side task">
           <p className="text-[15px] leading-relaxed text-muted-foreground">
             Suspect what someone else&apos;s secret task is? File a flag — the
-            AI auditor decides instantly. Correct: <span className="text-success">+3</span>.
+            AI auditor decides instantly. Correct: <span className="text-success">+7</span>.
             Wrong: <span className="text-destructive">−2</span>.
           </p>
           <div className="pt-1">
@@ -323,7 +323,7 @@ export default function PlayPage() {
                     <div className="flex items-center gap-3">
                       {flag.status === "caught" && (
                         <span className="font-mono text-sm tabular-nums text-success">
-                          +3
+                          +7
                         </span>
                       )}
                       {flag.status === "cleared" && (
@@ -768,7 +768,7 @@ function SelfReportPicker({
       <p className="text-[14px] text-foreground">
         <span className="font-medium text-destructive">Who caught you?</span>{" "}
         <span className="text-muted-foreground">
-          (they get +3, you get −1)
+          (they get +7, you get −1)
         </span>
       </p>
       <Input

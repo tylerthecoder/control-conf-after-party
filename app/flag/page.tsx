@@ -95,7 +95,7 @@ function FlagForm() {
                   {targetName ?? "their"}
                 </span>
                 &apos;s side task.{" "}
-                <span className="font-mono tabular-nums text-success">+3</span>{" "}
+                <span className="font-mono tabular-nums text-success">+7</span>{" "}
                 points.
               </>
             ) : (
